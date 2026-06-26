@@ -52,11 +52,36 @@ export default {
           green: '#3f9d6d',
           blue: '#5b9bd5',
         },
-        // Soft pastel accents (health-app palette) — used for tinted cards & tiles.
-        mint: { 100: '#dbeee4', 200: '#c4e3d2', 500: '#3f9d6d', 600: '#2f8f5f', 700: '#1f6f49' },
-        sky: { 100: '#dde9fb', 200: '#c7dbf6', 500: '#5b9bd5', 600: '#3f7fc4', 700: '#2c5f97' },
-        butter: { 100: '#fbeec6', 200: '#f6e0a4', 500: '#d59a36', 600: '#bf8f2e', 700: '#8f6a1f' },
-        lilac: { 100: '#e7defb', 200: '#d6c8f4', 500: '#8b6fc7', 600: '#6f55b8', 700: '#523f8c' },
+        // Soft pastel accents — 100 (tint bg) / 600 / 700 (text) are theme-aware
+        // via CSS vars so tinted cards adapt to dark mode; 500 stays vivid.
+        mint: {
+          100: 'rgb(var(--mint-100) / <alpha-value>)',
+          200: '#c4e3d2',
+          500: '#3f9d6d',
+          600: 'rgb(var(--mint-600) / <alpha-value>)',
+          700: 'rgb(var(--mint-700) / <alpha-value>)',
+        },
+        sky: {
+          100: 'rgb(var(--sky-100) / <alpha-value>)',
+          200: '#c7dbf6',
+          500: '#5b9bd5',
+          600: 'rgb(var(--sky-600) / <alpha-value>)',
+          700: 'rgb(var(--sky-700) / <alpha-value>)',
+        },
+        butter: {
+          100: 'rgb(var(--butter-100) / <alpha-value>)',
+          200: '#f6e0a4',
+          500: '#d59a36',
+          600: 'rgb(var(--butter-600) / <alpha-value>)',
+          700: 'rgb(var(--butter-700) / <alpha-value>)',
+        },
+        lilac: {
+          100: 'rgb(var(--lilac-100) / <alpha-value>)',
+          200: '#d6c8f4',
+          500: '#8b6fc7',
+          600: 'rgb(var(--lilac-600) / <alpha-value>)',
+          700: 'rgb(var(--lilac-700) / <alpha-value>)',
+        },
       },
       boxShadow: {
         // Soft, premium card shadows.

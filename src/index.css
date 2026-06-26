@@ -29,34 +29,60 @@
   --grid: 24 30 27;
   --sel: 63 157 109;
   --sel-fg: 255 255 255;
+  --mint-100: 219 238 228;
+  --mint-600: 47 143 95;
+  --mint-700: 31 111 73;
+  --sky-100: 221 233 251;
+  --sky-600: 63 127 196;
+  --sky-700: 44 95 151;
+  --butter-100: 251 238 198;
+  --butter-600: 191 143 46;
+  --butter-700: 143 106 31;
+  --lilac-100: 231 222 251;
+  --lilac-600: 111 85 184;
+  --lilac-700: 82 63 140;
 }
 
 [data-theme='dark'] {
   color-scheme: dark;
-  --ink-950: 250 249 246;
-  --ink-900: 237 234 228;
-  --ink-850: 220 216 209;
-  --ink-800: 198 193 184;
-  --ink-700: 165 159 149;
-  --ink-600: 132 126 116;
-  --ink-500: 108 102 93;
-  --paper-50: 26 24 22;
-  --paper-100: 32 30 27;
-  --stone-50: 32 30 27;
-  --stone-100: 38 36 32;
-  --stone-200: 50 47 42;
-  --stone-300: 66 62 56;
-  --stone-400: 88 83 75;
-  --stone-500: 120 113 103;
-  --stone-600: 150 143 132;
-  --stone-700: 185 179 168;
-  --glow-400: 220 216 209;
-  --glow-500: 237 234 228;
-  --glow-600: 250 249 246;
-  --page: 18 17 16;
+  /* Clean deep neutral dark (AutoCare-style) with white text + green accent. */
+  --ink-950: 248 250 249;
+  --ink-900: 233 237 235;
+  --ink-850: 214 220 217;
+  --ink-800: 188 195 192;
+  --ink-700: 156 164 160;
+  --ink-600: 120 129 125;
+  --ink-500: 96 104 100;
+  --paper-50: 23 25 24;
+  --paper-100: 28 31 30;
+  --stone-50: 28 31 30;
+  --stone-100: 33 37 35;
+  --stone-200: 44 48 46;
+  --stone-300: 58 63 61;
+  --stone-400: 80 87 84;
+  --stone-500: 110 118 114;
+  --stone-600: 146 154 150;
+  --stone-700: 182 190 186;
+  --glow-400: 214 220 217;
+  --glow-500: 233 237 235;
+  --glow-600: 248 250 249;
+  --page: 12 13 13;
   --grid: 255 255 255;
-  --sel: 237 234 228;
-  --sel-fg: 22 21 19;
+  --sel: 52 194 122;
+  --sel-fg: 12 13 13;
+  /* Pastel tints: dark backgrounds + light, vivid text. */
+  --mint-100: 22 42 31;
+  --mint-600: 95 191 138;
+  --mint-700: 127 208 163;
+  --sky-100: 22 36 54;
+  --sky-600: 123 179 224;
+  --sky-700: 150 196 232;
+  --butter-100: 46 39 20;
+  --butter-600: 227 192 106;
+  --butter-700: 235 205 140;
+  --lilac-100: 36 30 54;
+  --lilac-600: 169 143 214;
+  --lilac-700: 190 175 228;
 }
 
 html {
@@ -89,10 +115,10 @@ body {
 
 [data-theme='dark'] body {
   background-image:
-    radial-gradient(900px 520px at 88% -8%, rgba(124, 140, 255, 0.1), transparent 60%),
-    radial-gradient(700px 460px at -8% 6%, rgba(58, 160, 255, 0.06), transparent 55%),
-    linear-gradient(to right, rgb(var(--grid) / 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(var(--grid) / 0.05) 1px, transparent 1px);
+    radial-gradient(820px 520px at 92% -10%, rgba(52, 194, 122, 0.08), transparent 60%),
+    radial-gradient(700px 460px at -8% 4%, rgba(80, 120, 200, 0.05), transparent 58%),
+    linear-gradient(to right, rgb(var(--grid) / 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(var(--grid) / 0.04) 1px, transparent 1px);
   background-size: auto, auto, 56px 56px, 56px 56px;
 }
 
