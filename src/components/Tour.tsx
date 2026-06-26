@@ -17,18 +17,34 @@ const STEPS: Step[] = [
 
 type Rect = { top: number; left: number; width: number; height: number };
 
+/** Is a tour target currently rendered and visible (not a desktop-only control on mobile)? */
+function isVisible(sel: string): boolean {
+  const el = document.querySelector(sel) as HTMLElement | null;
+  if (!el) return false;
+  const r = el.getBoundingClientRect();
+  return r.width > 0 && r.height > 0;
+}
+
 export function Tour({ onFinish }: { onFinish: () => void }) {
+  // Resolve once which steps actually apply to this viewport, so numbering is
+  // continuous (1…N) instead of skipping hidden steps (1 → 5 → 6).
+  const [steps] = useState<Step[]>(() => STEPS.filter((s) => isVisible(s.sel)));
   const [i, setI] = useState(0);
   const [rect, setRect] = useState<Rect | null>(null);
-  const step = STEPS[i];
-  const last = i === STEPS.length - 1;
+  const step = steps[i];
+  const last = i === steps.length - 1;
 
   useEffect(() => {
+    if (!step) {
+      // Nothing visible to show — close gracefully.
+      onFinish();
+      return;
+    }
     const find = () => document.querySelector(step.sel) as HTMLElement | null;
     const el = find();
     const r = el?.getBoundingClientRect();
     if (!r || r.width === 0 || r.height === 0) {
-      // target hidden (e.g. desktop-only control on mobile) → skip it
+      // target vanished mid-tour → skip it
       if (last) onFinish();
       else setI((p) => p + 1);
       return;
@@ -93,7 +109,7 @@ export function Tour({ onFinish }: { onFinish: () => void }) {
         />
 
         <div className="flex items-center justify-between">
-          <span className="chip bg-mint-100 text-mint-700">Step {i + 1} of {STEPS.length}</span>
+          <span className="chip bg-mint-100 text-mint-700">Step {i + 1} of {steps.length}</span>
           <button onClick={onFinish} className="text-[11px] font-medium text-ink-500 transition-colors hover:text-ink-900">
             Skip tutorial
           </button>
@@ -104,7 +120,7 @@ export function Tour({ onFinish }: { onFinish: () => void }) {
 
         <div className="mt-3.5 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            {STEPS.map((_, k) => (
+            {steps.map((_, k) => (
               <span key={k} className={`h-1.5 rounded-full transition-all ${k === i ? 'w-4 bg-mint-500' : 'w-1.5 bg-ink-900/15'}`} />
             ))}
           </div>
