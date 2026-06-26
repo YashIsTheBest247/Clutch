@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react';
 import type { ScheduleBlock, Task } from '../types';
 
-// Context-aware browser notifications: fires when a deadline is approaching or a
-// scheduled focus block is starting. De-dupes via a per-session id set.
-export function useReminders(tasks: Task[], schedule: ScheduleBlock[], enabled: boolean) {
+// Context-aware browser notifications: fires when a deadline is approaching, a
+// scheduled focus block is starting, or it's time for the daily standup.
+// De-dupes via a per-session id set. `standupHour` is the user's day-start hour.
+export function useReminders(tasks: Task[], schedule: ScheduleBlock[], enabled: boolean, standupHour = 9) {
   const notified = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -21,6 +22,20 @@ export function useReminders(tasks: Task[], schedule: ScheduleBlock[], enabled: 
 
     const check = () => {
       const now = Date.now();
+      // Daily standup: once, after the user's day-start hour.
+      const d = new Date();
+      const dayKey = `standup-${d.toISOString().slice(0, 10)}`;
+      const open = tasks.filter((t) => t.status !== 'done');
+      if (d.getHours() >= standupHour && open.length > 0) {
+        const dueToday = open.filter(
+          (t) => t.deadline && new Date(t.deadline).toDateString() === d.toDateString(),
+        ).length;
+        notify(
+          dayKey,
+          '☀️ Your Clutch standup',
+          `${open.length} open${dueToday ? `, ${dueToday} due today` : ''}. Open Clutch to plan your day.`,
+        );
+      }
       for (const t of tasks) {
         if (t.status === 'done' || !t.deadline) continue;
         const ms = Date.parse(t.deadline) - now;
@@ -39,5 +54,5 @@ export function useReminders(tasks: Task[], schedule: ScheduleBlock[], enabled: 
     check();
     const id = window.setInterval(check, 30000);
     return () => window.clearInterval(id);
-  }, [enabled, tasks, schedule]);
+  }, [enabled, tasks, schedule, standupHour]);
 }

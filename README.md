@@ -26,17 +26,22 @@ You dump your commitments however you like — **type** them, **paste** an email
 
 ###  The agentic core
 - **Streaming Gemini agent** — a multi-step **function-calling** loop (`gemini-2.5-flash`) with 8 real tools that *take action*, not just chat: `add_task`, `decompose_task`, `set_priority`, `generate_deliverable`, `update_task_status`, `build_schedule`, `add_commitment`, `research_web`.
+- **⚡ Autopilot** — one button hands the agent your whole brain-dump (typed, pasted, photo, or PDF) and it runs the *entire* pipeline hands-off: captures every task, researches what it needs, decomposes, prioritizes, **drafts every deliverable**, schedules around your commitments, and ends on a single *"Start here →"*.
+- **Multi-agent narration** — the live feed shows a **Coordinator** delegating each step to a **Planner**, **Researcher**, and **Writer**, so you can watch the team work and see exactly who did what.
 - **Live web research** — Gemini's **Google Search grounding** pulls real-world facts (opening hours, official portals, prices, dates) to actually complete tasks.
 - **Deliverable generation** — drafts the extension email, the essay outline, the study plan, the checklist — ready to **copy** or **send** (`mailto:`).
 
 ###  Capture, any way you like
 - **Natural language** + **paste** an email / syllabus / messy notes
 - **Photo capture** — Gemini multimodal reads handwriting, whiteboards, bills, posters (drag, paste, or upload)
+- **PDF ingestion** — drop a course **syllabus**, project brief, or contract and Gemini's long context extracts *every* deadline at once (a whole semester in one shot)
 - **Voice input** (speech-to-text) and **hands-free conversation mode** (speak → it acts → speaks back → auto-listens)
 
 ###  Plan & prioritize
 - **Intelligent prioritization** — transparent urgency score = deadline proximity × impact, with the agent's reasoning shown
+- **"Will I make it?" on-time forecast** — a data-driven probability per task (*"73% on time"*) from your workload, working hours, and **learned pace**, plus a portfolio verdict: *"you'll finish 6/8 on time — 2 at risk"*
 - **AI scheduling** — packs focus blocks into your working hours, **around fixed commitments** (class, gym, meetings)
+- **Quick filters** — slice the board by **Today / This week / Overdue** with live counts
 - **Manual deadline editor** — click any task's deadline chip to set/change/clear it (date + time)
 - **Reality-Check** — honest capacity math: warns when you *physically can't* finish everything in time and suggests what to cut/move
 - **Recurring tasks** — daily / weekdays / weekly
@@ -47,6 +52,7 @@ You dump your commitments however you like — **type** them, **paste** an email
 - **Goals** (with progress bars) and **Habits** (daily check-off + per-habit streaks)
 
 ###  Proactive, not passive
+- **Daily standup** — once a day Clutch *reaches out first* with the state of play (due today, slipping, your first focus block) and the single next move — plus an optional morning **browser notification**
 - **Proactive slippage nudge** the moment you open the app
 - **Rescue Mode** — an "I'm overwhelmed" panic button that triages everything into the **3 next actions**
 - **Spoken daily briefing** (text-to-speech) that flags what's slipping
@@ -59,7 +65,7 @@ You dump your commitments however you like — **type** them, **paste** an email
 - Schedules **around** your real fixed commitments
 
 ###  Product experience
-- **Guided onboarding tour** — a premium first-visit walkthrough (spotlight + animated arrow/tooltip) of Account, Quick Notes, Quick Controls, Rescue Mode, and the Command palette, with **Skip / Back / Next** and **Replay tutorial** (from the profile menu or ⌘K)
+- **Guided onboarding tour** — a premium first-visit walkthrough (spotlight + animated arrow/tooltip) of Account, Quick Controls, Rescue Mode, the Command palette, Quick Notes, and **Autopilot** — auto-scrolling each off-screen target into view — with **Skip / Back / Next** and **Replay tutorial** (from the profile menu or ⌘K)
 - **Google Sign-In** (identity) — personalizes greeting + avatar for any user
 - **Insights dashboard** — completion rate, workload, streaks, by-category chart, and a **Gemini-written** "how you work" summary
 - **Floating Quick Notes** — an always-on scratchpad that auto-saves; **draggable** on desktop, a clean **bottom-sheet** on mobile, and can **turn notes into tasks** in one tap

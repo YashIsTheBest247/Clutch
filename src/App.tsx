@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import { useStore } from './lib/store';
 import { hasApiKey } from './lib/gemini';
 import { formatDeadline, realityCheck, slippage } from './lib/scheduler';
+import { buildForecast } from './lib/forecast';
 import { useCountUp, useInView } from './lib/anim';
 import { useTTS } from './lib/useTTS';
 import { useReminders } from './lib/useReminders';
@@ -29,8 +30,9 @@ import { GoalsHabits } from './components/GoalsHabits';
 import { HowItWorks } from './components/HowItWorks';
 import { CommandPalette, type Command } from './components/CommandPalette';
 import { Toaster } from './components/Toaster';
+import { StandupCard } from './components/StandupCard';
 import { downloadICS, scheduleToICS } from './lib/calendar';
-import { ArrowUpRight, Bell, Calendar, Chart, Check, Doc, Download, Flame, Gear, Github, Globe, Info, Lifebuoy, Linkedin, Menu, Mic, Moon, Play, Speaker, Sparkle, Sun, Trash, X } from './components/icons';
+import { ArrowUpRight, Bell, BellOff, Bolt, Calendar, Chart, Check, Doc, Download, Flame, Gear, Github, Globe, Info, Lifebuoy, Linkedin, Menu, Mic, Moon, Play, Speaker, Sparkle, Sun, Trash, X } from './components/icons';
 import { Logo } from './components/Logo';
 
 const TINTS = {
@@ -158,7 +160,7 @@ export default function App() {
   const handleStatus = (t: Task, s: Task['status']) => {
     store.setTaskStatus(t.id, s);
     if (s === 'done') {
-      toasts.push('Task completed 🎉', { actionLabel: 'Undo', onAction: () => store.setTaskStatus(t.id, 'todo') });
+      toasts.push('Task completed', { actionLabel: 'Undo', onAction: () => store.setTaskStatus(t.id, 'todo') });
     }
   };
   const exportData = () => {
@@ -219,6 +221,37 @@ export default function App() {
 
   // Reality-Check: can the workload actually fit before the deadlines?
   const reality = useMemo(() => realityCheck(state.tasks, state.profile, new Date()), [state.tasks, state.profile]);
+
+  // "Will I make it?" — per-task on-time probability + portfolio verdict.
+  const forecast = useMemo(
+    () => buildForecast(state.tasks, state.profile, state.calibration, new Date()),
+    [state.tasks, state.profile, state.calibration],
+  );
+
+  // Proactive daily standup — surfaces once per day on open.
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const [standupDismissed, setStandupDismissed] = useState(() => {
+    try {
+      return localStorage.getItem('clutch.standup.' + todayKey) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const dismissStandup = () => {
+    setStandupDismissed(true);
+    try {
+      localStorage.setItem('clutch.standup.' + todayKey, '1');
+    } catch {
+      /* noop */
+    }
+  };
+  const nextBlock = useMemo(() => {
+    const now = Date.now();
+    const up = state.schedule
+      .filter((b) => Date.parse(b.start) > now)
+      .sort((a, b) => Date.parse(a.start) - Date.parse(b.start))[0];
+    return up ? new Date(up.start).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : undefined;
+  }, [state.schedule]);
   const [realityDismissed, setRealityDismissed] = useState(false);
   const fmtH = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m}m`);
   const fixOvercommit = async () => {
@@ -233,7 +266,7 @@ export default function App() {
 
   // Context-aware browser reminders.
   const [remindersOn, setRemindersOn] = useState(false);
-  useReminders(state.tasks, state.schedule, remindersOn);
+  useReminders(state.tasks, state.schedule, remindersOn, state.profile.dayStartHour);
   const toggleReminders = async () => {
     if (typeof Notification === 'undefined') return;
     if (remindersOn) {
@@ -324,6 +357,26 @@ export default function App() {
   // Composer send: process, then reveal the Priorities / Plan / Agent area.
   const handleCompose = async (text: string, image?: Parameters<typeof store.sendToAgent>[1]) => {
     await store.sendToAgent(text, image);
+    setTimeout(() => scrollToId('priorities'), 150);
+  };
+
+  // Autopilot — hand the agent everything and let it run the full pipeline.
+  const AUTOPILOT_DIRECTIVE =
+    "AUTOPILOT — run the full pipeline end-to-end and don't ask me anything. " +
+    "1) Capture every task, fixed commitment and deadline. " +
+    "2) Where real-world facts would help (links, opening hours, prices, dates, how-to), research the web. " +
+    "3) Decompose anything non-trivial into concrete steps. " +
+    "4) Prioritize by deadline proximity and impact. " +
+    "5) For every task with a clear work product, GENERATE the complete deliverable now (email, outline, plan, checklist, message). " +
+    "6) Build my schedule around fixed commitments. " +
+    "7) Finish with one line: 'Start here →' naming the single most important next action.";
+  const runAutopilot = async (text?: string, image?: Parameters<typeof store.sendToAgent>[1]) => {
+    if (thinking) return;
+    const situation = text?.trim()
+      ? `Here's my situation:\n${text.trim()}`
+      : 'Use my existing tracked tasks and commitments.';
+    setTimeout(() => scrollToId('agent'), 80);
+    await store.sendToAgent(`${AUTOPILOT_DIRECTIVE}\n\n${situation}`, image);
     setTimeout(() => scrollToId('priorities'), 150);
   };
 
@@ -439,6 +492,7 @@ export default function App() {
   const greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
   const commands: Command[] = [
+    { id: 'autopilot', label: 'Autopilot — capture, research, schedule & draft everything', icon: <Bolt className="h-4 w-4" />, run: () => runAutopilot(), disabled: open.length === 0 },
     { id: 'plan', label: 'Plan my day', icon: <Sparkle className="h-4 w-4" />, run: planMyDay, disabled: open.length === 0 },
     { id: 'rescue', label: 'Rescue me — triage everything', icon: <Lifebuoy className="h-4 w-4" />, run: rescueMe, disabled: open.length === 0 },
     { id: 'brief', label: 'Spoken daily briefing', icon: <Play className="h-4 w-4" />, run: requestBriefing, disabled: open.length === 0 },
@@ -612,6 +666,7 @@ export default function App() {
 
               <div className="my-1 h-px bg-ink-900/[0.06]" />
               <p className="px-3 pb-1 pt-1 label text-ink-500">Do</p>
+              <MItem icon={<Bolt className="h-4 w-4" />} label="Autopilot — do it all" onClick={() => { runAutopilot(); setMobileOpen(false); }} />
               <MItem icon={<Sparkle className="h-4 w-4" />} label="Plan my day" onClick={() => { planMyDay(); setMobileOpen(false); }} />
               <MItem icon={<Lifebuoy className="h-4 w-4" />} label="Rescue me" danger onClick={() => { rescueMe(); setMobileOpen(false); }} />
               <MItem icon={<Play className="h-4 w-4" />} label="Daily briefing" onClick={() => { requestBriefing(); setMobileOpen(false); }} />
@@ -619,7 +674,7 @@ export default function App() {
 
               <div className="my-1 h-px bg-ink-900/[0.06]" />
               <p className="px-3 pb-1 pt-1 label text-ink-500">Controls</p>
-              <MItem icon={<Bell className="h-4 w-4" />} label="Browser reminders" active={remindersOn} onClick={toggleReminders} />
+              <MItem icon={remindersOn ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />} label="Browser reminders" active={remindersOn} onClick={toggleReminders} />
               {tts.supported && <MItem icon={<Speaker className="h-4 w-4" />} label="Voice replies" active={voiceOut} onClick={toggleVoice} />}
               {convo.supported && tts.supported && <MItem icon={<Mic className="h-4 w-4" />} label="Hands-free conversation" active={converseOn} onClick={toggleConverse} />}
 
@@ -642,6 +697,33 @@ export default function App() {
               Studio secret) and rebuild — the agent needs it to think.
             </span>
           </div>
+        </Reveal>
+      )}
+
+      {/* Proactive daily standup — the app reaches out first, once per day */}
+      {!standupDismissed && !showHint && !thinking && open.length > 0 && (
+        <Reveal className="mb-4">
+          <StandupCard
+            name={state.profile.name}
+            greeting={greet}
+            dueToday={filterCounts.today}
+            slipping={slip.atRisk.length}
+            overdue={slip.overdue.length}
+            firstBlock={nextBlock}
+            topTask={top?.title}
+            onTrack={forecast.onTrack}
+            forecastTotal={forecast.total}
+            thinking={thinking}
+            onPlan={() => {
+              dismissStandup();
+              planMyDay();
+            }}
+            onBrief={() => {
+              dismissStandup();
+              requestBriefing();
+            }}
+            onDismiss={dismissStandup}
+          />
         </Reveal>
       )}
 
@@ -776,7 +858,7 @@ export default function App() {
 
       {/* Composer */}
       <Reveal className="mb-4">
-        <Composer onSend={handleCompose} thinking={thinking} empty={state.tasks.length === 0} />
+        <Composer onSend={handleCompose} onAutopilot={runAutopilot} thinking={thinking} empty={state.tasks.length === 0} />
       </Reveal>
 
       {/* Main grid */}
@@ -804,6 +886,35 @@ export default function App() {
               </span>
             </div>
           </Reveal>
+          {forecast.total > 0 && (
+            <Reveal>
+              <div
+                className={`mb-3 flex items-center gap-2 rounded-2xl border px-3 py-2 text-xs ${
+                  forecast.atRisk > 0
+                    ? 'border-signal-red/25 bg-signal-red/[0.06] text-ink-700'
+                    : 'border-mint-500/30 bg-mint-100/60 text-ink-700'
+                }`}
+                title="Forecast from your workload, working hours and past pace"
+              >
+                <Sparkle className={`h-3.5 w-3.5 shrink-0 ${forecast.atRisk > 0 ? 'text-signal-red' : 'text-mint-600'}`} />
+                <span>
+                  Forecast: you'll finish{' '}
+                  <span className="font-semibold text-ink-900">
+                    {forecast.onTrack}/{forecast.total}
+                  </span>{' '}
+                  on time
+                  {forecast.atRisk > 0 ? (
+                    <>
+                      {' '}— <span className="font-semibold text-signal-red">{forecast.atRisk} at risk</span>
+                    </>
+                  ) : (
+                    <> — all on track</>
+                  )}
+                  .
+                </span>
+              </div>
+            </Reveal>
+          )}
           {state.tasks.length > 0 && (
             <Reveal>
               <div className="mb-3 flex flex-wrap items-center gap-1.5 px-1">
@@ -868,6 +979,7 @@ export default function App() {
                     onAssignGoal={(gid) => store.assignTaskGoal(t.id, gid)}
                     onSetRecur={(r) => store.setTaskRecur(t.id, r)}
                     onSetDeadline={(d) => store.setTaskDeadline(t.id, d)}
+                    winChance={forecast.byId[t.id]?.p}
                   />
                 </Reveal>
               ))}

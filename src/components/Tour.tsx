@@ -8,10 +8,11 @@ interface Step {
 
 const STEPS: Step[] = [
   { sel: '[data-tour="profile"]', title: 'Your account', body: 'Sign in with Google or set up your profile here to personalize your plan.' },
-  { sel: '[data-tour="notes"]', title: 'Quick Notes', body: 'A floating scratchpad — jot anything down, it auto-saves, and can turn into tasks in one tap.' },
   { sel: '[data-tour="controls"]', title: 'Quick controls', body: 'Reminders, voice replies, hands-free conversation, and your spoken daily briefing all live here.' },
   { sel: '[data-tour="rescue"]', title: 'Rescue Mode', body: "Overwhelmed? One tap triages everything into the 3 things to do right now." },
   { sel: '[data-tour="palette"]', title: 'Command palette', body: 'Press ⌘K (Ctrl+K) anytime to run any action instantly.' },
+  { sel: '[data-tour="notes"]', title: 'Quick Notes', body: 'A floating scratchpad — jot anything down, it auto-saves, and can turn into tasks in one tap.' },
+  { sel: '[data-tour="autopilot"]', title: 'Autopilot', body: 'Dump everything — type, paste, drop a photo or PDF — then hit Autopilot and Clutch captures, researches, prioritizes, schedules, and drafts it all in one shot.' },
 ];
 
 type Rect = { top: number; left: number; width: number; height: number };
@@ -24,12 +25,17 @@ export function Tour({ onFinish }: { onFinish: () => void }) {
 
   useEffect(() => {
     const find = () => document.querySelector(step.sel) as HTMLElement | null;
-    const r = find()?.getBoundingClientRect();
+    const el = find();
+    const r = el?.getBoundingClientRect();
     if (!r || r.width === 0 || r.height === 0) {
       // target hidden (e.g. desktop-only control on mobile) → skip it
       if (last) onFinish();
       else setI((p) => p + 1);
       return;
+    }
+    // If the target is off-screen, scroll it into view (sticky/fixed bars stay put).
+    if (el && (r.top < 0 || r.bottom > window.innerHeight)) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
     const update = () => {
       const rr = find()?.getBoundingClientRect();

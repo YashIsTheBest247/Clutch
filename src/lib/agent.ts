@@ -320,7 +320,7 @@ How to act:
 - Prioritize by deadline proximity AND impact. Critical = imminent + high stakes.
 - When a task has a clear work product (an email to send, an outline to write, a plan to follow, a checklist), GENERATE it fully with generate_deliverable so the user can act in one click.
 - When real-world facts would help (opening hours, official links/portals, prices, addresses, exact dates), call research_web rather than guessing — then use what you learn in deliverables and reply.
-- If an image is attached, read it carefully and extract EVERY task, commitment, deadline, or action item visible — handwritten notes, whiteboards, screenshots, bills, posters, or syllabi.
+- If a file is attached (image OR PDF), read it carefully and extract EVERY task, commitment, deadline, or action item — handwritten notes, whiteboards, screenshots, bills, posters, or a multi-week course syllabus / project brief / contract. For a syllabus, capture each assignment and exam with its own deadline.
 - Distinguish fixed events from tasks: a class/meeting/gym/appointment at a set time is a COMMITMENT (use add_commitment) — the schedule is built around it; everything else is a task.
 - After creating/changing tasks, call build_schedule to lay out a concrete plan that works around fixed commitments.
 - Keep your final text reply short, warm, and confident: tell the user what you DID and the single most important next action. Use Markdown. Never dump raw JSON.`;
@@ -337,7 +337,7 @@ export interface AgentRunResult {
  * the work, then returns a natural-language summary. Mutates a copy of state.
  */
 export interface AgentImage {
-  /** Base64 (no data: prefix). */
+  /** Base64 (no data: prefix). Image OR PDF — Gemini reads both inline. */
   data: string;
   mimeType: string;
 }
@@ -372,7 +372,7 @@ export async function runAgent(
       : '';
 
   const userParts: any[] = [
-    { text: `${contextSummary}${commitmentSummary}\n\n---\nUser says: ${userText || '(see the attached image)'}` },
+    { text: `${contextSummary}${commitmentSummary}\n\n---\nUser says: ${userText || '(see the attached file)'}` },
   ];
   if (image) userParts.push({ inlineData: { mimeType: image.mimeType, data: image.data } });
   const contents: any[] = [{ role: 'user', parts: userParts }];

@@ -116,6 +116,11 @@ export const Bell = ({ className = base }: P) => (
     <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0" />
   </svg>
 );
+export const BellOff = ({ className = base }: P) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M8.7 3A6 6 0 0 1 18 8c0 2.6.4 4.5.9 5.9M18.6 18H3s3-2 3-9c0-.5 0-1 .1-1.5M13.7 21a2 2 0 0 1-3.4 0M2 2l20 20" />
+  </svg>
+);
 export const Target = ({ className = base }: P) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="9" />

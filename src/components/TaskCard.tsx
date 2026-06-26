@@ -1,5 +1,6 @@
 import type { Goal, Task } from '../types';
 import { formatDeadline, formatDuration } from '../lib/scheduler';
+import { forecastBand } from '../lib/forecast';
 import { ThemedSelect } from './ThemedSelect';
 import { DeadlineEditor } from './DeadlineEditor';
 import { ArrowUpRight, Briefcase, Check, Clock, Doc, Heart, Layers, Play, Wallet } from './icons';
@@ -48,6 +49,7 @@ export function TaskCard({
   onAssignGoal,
   onSetRecur,
   onSetDeadline,
+  winChance,
 }: {
   task: Task;
   onToggleSub: (subId: string) => void;
@@ -59,9 +61,13 @@ export function TaskCard({
   onAssignGoal?: (goalId?: string) => void;
   onSetRecur?: (recur?: Task['recur']) => void;
   onSetDeadline?: (deadline?: string) => void;
+  /** 0–1 on-time probability (only for tasks with a deadline). */
+  winChance?: number;
 }) {
   const dl = formatDeadline(task.deadline);
   const done = task.status === 'done';
+  const band = winChance != null ? forecastBand(winChance) : null;
+  const winPct = winChance != null ? Math.round(winChance * 100) : 0;
   const subDone = task.subtasks.filter((s) => s.done).length;
   const pct = task.subtasks.length ? Math.round((subDone / task.subtasks.length) * 100) : done ? 100 : 0;
   const catKey = task.category || task.title;
@@ -115,6 +121,26 @@ export function TaskCard({
             )}
             {task.status === 'blocked' && <span className="font-semibold text-signal-red">blocked</span>}
           </div>
+
+          {!done && band && (
+            <div className="mt-2 flex items-center gap-2" title="Estimated chance of finishing before the deadline, from your workload, working hours & past pace">
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-stone-200">
+                <div
+                  className={`h-full rounded-full transition-all ${
+                    band.tone === 'green' ? 'bg-mint-500' : band.tone === 'amber' ? 'bg-signal-amber' : 'bg-signal-red'
+                  }`}
+                  style={{ width: `${Math.max(4, winPct)}%` }}
+                />
+              </div>
+              <span
+                className={`shrink-0 text-[11px] font-semibold ${
+                  band.tone === 'green' ? 'text-mint-600' : band.tone === 'amber' ? 'text-signal-amber' : 'text-signal-red'
+                }`}
+              >
+                {winPct}% on time
+              </span>
+            </div>
+          )}
 
           {task.reasoning && <p className="mt-2 text-[11px] italic text-ink-500">“{task.reasoning}”</p>}
 
