@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 import type { UserProfile } from '../types';
 import type { GoogleUser } from '../lib/useGoogleAuth';
-import { Chart, Gear, Info, Trash, X } from './icons';
+import { Chart, Gear, Info, Play, Trash, X } from './icons';
 
 function Item({
   icon,
@@ -37,6 +37,7 @@ export function ProfileMenu({
   onAbout,
   onReset,
   onSignOut,
+  onReplayTutorial,
 }: {
   profile: UserProfile;
   children: ReactElement; // the avatar trigger
@@ -47,6 +48,7 @@ export function ProfileMenu({
   onAbout: () => void;
   onReset: () => void;
   onSignOut?: () => void;
+  onReplayTutorial?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -102,6 +104,7 @@ export function ProfileMenu({
           <div className="my-1 h-px bg-ink-900/[0.06]" />
           <Item icon={<Gear className="h-4 w-4" />} label="Profile & preferences" onClick={act(onProfile)} />
           <Item icon={<Chart className="h-4 w-4" />} label="Insights" onClick={act(onInsights)} />
+          {onReplayTutorial && <Item icon={<Play className="h-4 w-4" />} label="Replay tutorial" onClick={act(onReplayTutorial)} />}
           <Item icon={<Info className="h-4 w-4" />} label="About Clutch" onClick={act(onAbout)} />
           <div className="my-1 h-px bg-ink-900/[0.06]" />
           {user && onSignOut ? (

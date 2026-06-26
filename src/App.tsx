@@ -22,7 +22,7 @@ import { ProfileMenu } from './components/ProfileMenu';
 import { ControlsMenu } from './components/ControlsMenu';
 import { NotesWidget } from './components/NotesWidget';
 import { GoogleSignInButton } from './components/GoogleSignInButton';
-import { OnboardingHint } from './components/OnboardingHint';
+import { Tour } from './components/Tour';
 import { AboutModal } from './components/AboutModal';
 import { InsightsModal } from './components/InsightsModal';
 import { GoalsHabits } from './components/GoalsHabits';
@@ -146,7 +146,6 @@ export default function App() {
     if (auth.user) {
       const n = auth.user.given_name || auth.user.name;
       if (n && state.profile.name !== n) store.setProfile({ name: n });
-      dismissHint();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.user?.sub]);
@@ -382,6 +381,7 @@ export default function App() {
     { id: 'go-goals', label: 'Go to Goals & habits', hint: 'section', icon: <ArrowUpRight className="h-4 w-4" />, run: () => scrollToId('goals') },
     { id: 'profile', label: 'Profile & preferences', icon: <Gear className="h-4 w-4" />, run: () => setShowSettings(true) },
     { id: 'about', label: 'About Clutch', icon: <Info className="h-4 w-4" />, run: () => setShowAbout(true) },
+    { id: 'tour', label: 'Replay tutorial', icon: <Play className="h-4 w-4" />, run: () => setShowHint(true) },
     { id: 'reset', label: 'Reset everything', icon: <Trash className="h-4 w-4" />, run: resetAll },
   ];
 
@@ -414,6 +414,7 @@ export default function App() {
             <button onClick={() => scrollToId('how')} className="transition-colors hover:text-ink-900">How it works</button>
             <button
               onClick={() => setPaletteOpen(true)}
+              data-tour="palette"
               title="Command palette"
               className="rounded-lg border border-ink-900/15 px-2 py-1 text-[11px] font-semibold text-ink-500 transition-colors hover:border-ink-900/40 hover:text-ink-900"
             >
@@ -432,16 +433,19 @@ export default function App() {
 
             {/* Heavier actions — desktop only (in the hamburger on mobile) */}
             <div className="hidden items-center gap-2 lg:flex">
-              <ControlsMenu
-                items={[
-                  { id: 'remind', icon: <Bell className="h-4 w-4" />, label: 'Browser reminders', active: remindersOn, onClick: toggleReminders },
-                  { id: 'voice', icon: <Speaker className="h-4 w-4" />, label: 'Voice replies', active: voiceOut, disabled: !tts.supported, onClick: toggleVoice },
-                  { id: 'converse', icon: <Mic className="h-4 w-4" />, label: 'Hands-free conversation', active: converseOn, disabled: !convo.supported || !tts.supported, onClick: toggleConverse },
-                  { id: 'brief', icon: <Play className="h-4 w-4" />, label: 'Spoken daily briefing', disabled: thinking || open.length === 0, onClick: requestBriefing },
-                ]}
-              />
+              <span data-tour="controls" className="inline-flex">
+                <ControlsMenu
+                  items={[
+                    { id: 'remind', icon: <Bell className="h-4 w-4" />, label: 'Browser reminders', active: remindersOn, onClick: toggleReminders },
+                    { id: 'voice', icon: <Speaker className="h-4 w-4" />, label: 'Voice replies', active: voiceOut, disabled: !tts.supported, onClick: toggleVoice },
+                    { id: 'converse', icon: <Mic className="h-4 w-4" />, label: 'Hands-free conversation', active: converseOn, disabled: !convo.supported || !tts.supported, onClick: toggleConverse },
+                    { id: 'brief', icon: <Play className="h-4 w-4" />, label: 'Spoken daily briefing', disabled: thinking || open.length === 0, onClick: requestBriefing },
+                  ]}
+                />
+              </span>
               <button
                 onClick={rescueMe}
+                data-tour="rescue"
                 disabled={thinking || open.length === 0}
                 title="I'm overwhelmed — triage everything now"
                 className="btn !px-3 !text-xs border border-signal-red/40 bg-signal-red/10 text-signal-red hover:bg-signal-red/15"
@@ -477,8 +481,9 @@ export default function App() {
               onAbout={() => setShowAbout(true)}
               onReset={resetAll}
               onSignOut={auth.enabled ? auth.signOut : undefined}
+              onReplayTutorial={() => setShowHint(true)}
             >
-              <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-ink-900/15 bg-paper-50 py-1 pl-1 pr-2 transition-all hover:-translate-y-0.5 hover:border-ink-900/40 hover:shadow-soft">
+              <span data-tour="profile" className="flex shrink-0 items-center gap-1.5 rounded-full border border-ink-900/15 bg-paper-50 py-1 pl-1 pr-2 transition-all hover:-translate-y-0.5 hover:border-ink-900/40 hover:shadow-soft">
                 {auth.user?.picture ? (
                   <img src={auth.user.picture} alt="" className="h-7 w-7 rounded-full" referrerPolicy="no-referrer" />
                 ) : (
@@ -886,15 +891,7 @@ export default function App() {
           }}
         />
       )}
-      {showHint && (
-        <OnboardingHint
-          onAction={() => {
-            dismissHint();
-            setShowSettings(true);
-          }}
-          onDismiss={dismissHint}
-        />
-      )}
+      {showHint && <Tour onFinish={dismissHint} />}
       <NotesWidget onCapture={(t) => handleCompose(t)} focusActive={!!focusTask} />
       <Toaster toasts={toasts.toasts} onDismiss={toasts.dismiss} />
       {paletteOpen && <CommandPalette commands={commands} onClose={() => setPaletteOpen(false)} />}

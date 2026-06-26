@@ -182,6 +182,7 @@ export function NotesWidget({
         )}
         <button
           onClick={togglePanel}
+          data-tour="notes"
           aria-label="Quick notes"
           className={`fixed bottom-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-ink-900 text-paper-50 shadow-glow transition-all duration-300 active:scale-95 print:hidden ${
             focusActive && !open ? 'left-4' : 'right-4'
@@ -214,6 +215,7 @@ export function NotesWidget({
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
+        data-tour="notes"
         title="Quick notes (drag to move)"
         aria-label="Quick notes"
         style={{ touchAction: 'none' }}
