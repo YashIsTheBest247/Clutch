@@ -16,7 +16,13 @@ export function emptyState(): AppState {
     tasks: [],
     schedule: [],
     messages: [],
+    streak: { count: 0 },
   };
+}
+
+/** Local calendar date as YYYY-MM-DD. */
+export function todayStr(d = new Date()): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 export function loadState(): AppState {

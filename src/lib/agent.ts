@@ -112,6 +112,19 @@ const tools: FunctionDeclaration[] = [
       'Place all open tasks onto the calendar in focused blocks within the user working hours, earliest-deadline-first. Call this after adding/repriotizing tasks, or when the user asks for a plan/schedule.',
     parameters: { type: Type.OBJECT, properties: {} },
   },
+  {
+    name: 'research_web',
+    description:
+      'Search the live web (Google) for real-world, up-to-date facts needed to plan or complete a task — opening hours, official portals/links, prices, addresses, dates, or how-to steps. Returns a grounded answer with sources. Use this instead of guessing real-world details.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        query: { type: Type.STRING, description: 'A focused, specific search query.' },
+        forTask: { type: Type.STRING, description: 'Optional task id/title this research supports.' },
+      },
+      required: ['query'],
+    },
+  },
 ];
 
 function findTask(state: AppState, ref: string): Task | undefined {
@@ -127,7 +140,7 @@ function findTask(state: AppState, ref: string): Task | undefined {
 type ToolResult = { result: Record<string, unknown>; action: AgentAction };
 
 /** Execute one tool call against a (mutable) working state. */
-function executeTool(name: string, args: any, state: AppState, now: Date): ToolResult {
+async function executeTool(name: string, args: any, state: AppState, now: Date): Promise<ToolResult> {
   switch (name) {
     case 'add_task': {
       const task: Task = {
@@ -222,6 +235,30 @@ function executeTool(name: string, args: any, state: AppState, now: Date): ToolR
         action: { tool: 'build_schedule', summary: `Scheduled ${byTask.size} tasks into ${blocks.length} focus blocks` },
       };
     }
+    case 'research_web': {
+      try {
+        const ai = getClient();
+        const res = await ai.models.generateContent({
+          model: MODEL,
+          contents: args.query,
+          config: { tools: [{ googleSearch: {} }] },
+        });
+        const meta = (res.candidates?.[0] as any)?.groundingMetadata;
+        const sources: string[] = (meta?.groundingChunks ?? [])
+          .map((c: any) => c?.web?.uri)
+          .filter(Boolean)
+          .slice(0, 4);
+        return {
+          result: { ok: true, answer: res.text ?? '', sources },
+          action: { tool: 'research_web', summary: `Researched: “${String(args.query).slice(0, 48)}”` },
+        };
+      } catch (e: any) {
+        return {
+          result: { ok: false, error: e?.message || 'search failed' },
+          action: { tool: 'research_web', summary: 'Web research unavailable' },
+        };
+      }
+    }
     default:
       return { result: { ok: false, error: 'unknown tool' }, action: { tool: name, summary: 'Unknown tool' } };
   }
@@ -242,6 +279,8 @@ How to act:
 - Decompose non-trivial tasks into concrete subtasks.
 - Prioritize by deadline proximity AND impact. Critical = imminent + high stakes.
 - When a task has a clear work product (an email to send, an outline to write, a plan to follow, a checklist), GENERATE it fully with generate_deliverable so the user can act in one click.
+- When real-world facts would help (opening hours, official links/portals, prices, addresses, exact dates), call research_web rather than guessing — then use what you learn in deliverables and reply.
+- If an image is attached, read it carefully and extract EVERY task, commitment, deadline, or action item visible — handwritten notes, whiteboards, screenshots, bills, posters, or syllabi.
 - After creating/changing tasks, call build_schedule to lay out a concrete plan.
 - Keep your final text reply short, warm, and confident: tell the user what you DID and the single most important next action. Use Markdown. Never dump raw JSON.`;
 }
@@ -256,10 +295,17 @@ export interface AgentRunResult {
  * Run one agentic turn: the model may call tools repeatedly until it has done
  * the work, then returns a natural-language summary. Mutates a copy of state.
  */
+export interface AgentImage {
+  /** Base64 (no data: prefix). */
+  data: string;
+  mimeType: string;
+}
+
 export async function runAgent(
   state: AppState,
   userText: string,
   onStep?: (action: AgentAction) => void,
+  image?: AgentImage,
 ): Promise<AgentRunResult> {
   const ai = getClient();
   const now = new Date();
@@ -277,12 +323,11 @@ export async function runAgent(
           )
           .join('\n');
 
-  const contents: any[] = [
-    {
-      role: 'user',
-      parts: [{ text: `${contextSummary}\n\n---\nUser says: ${userText}` }],
-    },
+  const userParts: any[] = [
+    { text: `${contextSummary}\n\n---\nUser says: ${userText || '(see the attached image)'}` },
   ];
+  if (image) userParts.push({ inlineData: { mimeType: image.mimeType, data: image.data } });
+  const contents: any[] = [{ role: 'user', parts: userParts }];
 
   const actions: AgentAction[] = [];
   let reply = '';
@@ -312,7 +357,7 @@ export async function runAgent(
 
     const responseParts: any[] = [];
     for (const call of calls) {
-      const { result, action } = executeTool(call.name as string, call.args ?? {}, working, now);
+      const { result, action } = await executeTool(call.name as string, call.args ?? {}, working, now);
       actions.push(action);
       onStep?.(action);
       responseParts.push({

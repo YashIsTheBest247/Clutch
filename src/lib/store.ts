@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AgentAction, AgentMessage, AppState, Task, UserProfile } from '../types';
-import { loadState, saveState, uid } from './storage';
-import { runAgent } from './agent';
+import { loadState, saveState, todayStr, uid } from './storage';
+import { runAgent, type AgentImage } from './agent';
 import { computeUrgency } from './scheduler';
+import { fireConfetti } from './confetti';
 
 export interface Store {
   state: AppState;
   thinking: boolean;
   liveActions: AgentAction[];
-  sendToAgent: (text: string) => Promise<void>;
+  sendToAgent: (text: string, image?: AgentImage) => Promise<void>;
   setProfile: (p: Partial<UserProfile>) => void;
   toggleSubtask: (taskId: string, subId: string) => void;
   setTaskStatus: (taskId: string, status: Task['status']) => void;
@@ -35,14 +36,17 @@ export function useStore(): Store {
   }, []);
 
   const sendToAgent = useCallback(
-    async (text: string) => {
-      if (!text.trim() || thinking) return;
-      pushMessage({ role: 'user', content: text });
+    async (text: string, image?: AgentImage) => {
+      if ((!text.trim() && !image) || thinking) return;
+      pushMessage({ role: 'user', content: image ? `${text || ''} 📎 image attached`.trim() : text });
       setThinking(true);
       setLiveActions([]);
       try {
-        const result = await runAgent(stateRef.current, text, (a) =>
-          setLiveActions((prev) => [...prev, a]),
+        const result = await runAgent(
+          stateRef.current,
+          text,
+          (a) => setLiveActions((prev) => [...prev, a]),
+          image,
         );
         setState((s) => ({
           ...result.state,
@@ -94,18 +98,34 @@ export function useStore(): Store {
   }, []);
 
   const setTaskStatus = useCallback((taskId: string, status: Task['status']) => {
-    setState((s) => ({
-      ...s,
-      tasks: s.tasks.map((t) =>
-        t.id !== taskId
-          ? t
-          : {
-              ...t,
-              status,
-              subtasks: status === 'done' ? t.subtasks.map((su) => ({ ...su, done: true })) : t.subtasks,
-            },
-      ),
-    }));
+    setState((s) => {
+      const wasDone = s.tasks.find((t) => t.id === taskId)?.status === 'done';
+      const completing = status === 'done' && !wasDone;
+      let streak = s.streak ?? { count: 0 };
+      if (completing) {
+        const today = todayStr();
+        if (streak.lastDate !== today) {
+          const y = new Date();
+          y.setDate(y.getDate() - 1);
+          const consecutive = streak.lastDate === todayStr(y);
+          streak = { count: consecutive ? streak.count + 1 : 1, lastDate: today };
+        }
+        fireConfetti();
+      }
+      return {
+        ...s,
+        streak,
+        tasks: s.tasks.map((t) =>
+          t.id !== taskId
+            ? t
+            : {
+                ...t,
+                status,
+                subtasks: status === 'done' ? t.subtasks.map((su) => ({ ...su, done: true })) : t.subtasks,
+              },
+        ),
+      };
+    });
   }, []);
 
   const deleteTask = useCallback((taskId: string) => {

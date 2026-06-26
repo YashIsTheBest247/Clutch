@@ -75,10 +75,18 @@ export interface UserProfile {
   workStyle: string;
 }
 
+export interface Streak {
+  /** Consecutive days with at least one completed task. */
+  count: number;
+  /** Local YYYY-MM-DD of the most recent completion. */
+  lastDate?: string;
+}
+
 export interface AppState {
   profile: UserProfile;
   tasks: Task[];
   schedule: ScheduleBlock[];
   messages: AgentMessage[];
   lastReviewAt?: string;
+  streak?: Streak;
 }

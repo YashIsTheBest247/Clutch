@@ -1,22 +1,27 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactElement } from 'react';
 import type { AgentAction, AgentMessage } from '../types';
 import { Markdown } from './Markdown';
-import { Bolt, Sparkle } from './icons';
+import { Calendar, Check, Doc, Flame, Layers, Plus, Search, Sparkle } from './icons';
 
-const toolLabel: Record<string, string> = {
-  add_task: 'Captured task',
-  decompose_task: 'Broke down task',
-  set_priority: 'Re-prioritized',
-  generate_deliverable: 'Wrote deliverable',
-  update_task_status: 'Updated status',
-  build_schedule: 'Built schedule',
+type IconCmp = (p: { className?: string }) => ReactElement;
+
+const tool: Record<string, { label: string; Icon: IconCmp }> = {
+  add_task: { label: 'Captured task', Icon: Plus },
+  decompose_task: { label: 'Broke down task', Icon: Layers },
+  set_priority: { label: 'Re-prioritized', Icon: Flame },
+  generate_deliverable: { label: 'Wrote deliverable', Icon: Doc },
+  update_task_status: { label: 'Updated status', Icon: Check },
+  build_schedule: { label: 'Built schedule', Icon: Calendar },
+  research_web: { label: 'Searched the web', Icon: Search },
 };
 
 function ActionRow({ a }: { a: AgentAction }) {
+  const meta = tool[a.tool];
+  const Icon = meta?.Icon ?? Sparkle;
   return (
     <div className="flex items-center gap-2 rounded-xl border border-ink-900/[0.06] bg-paper-50 px-2.5 py-1.5 text-[11px] text-ink-600 shadow-soft">
-      <Bolt className="h-3.5 w-3.5 text-ink-800" />
-      <span className="font-semibold text-ink-900">{toolLabel[a.tool] ?? a.tool}</span>
+      <Icon className="h-3.5 w-3.5 text-ink-800" />
+      <span className="font-semibold text-ink-900">{meta?.label ?? a.tool}</span>
       <span className="truncate text-ink-500">· {a.summary}</span>
     </div>
   );
@@ -31,20 +36,22 @@ export function ActivityFeed({
   thinking: boolean;
   liveActions: AgentAction[];
 }) {
-  const endRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Scroll only the feed's own container — never the page/window.
+    const el = listRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [messages.length, thinking, liveActions.length]);
 
   return (
     <div className="panel flex h-full min-h-0 flex-col p-4">
       <div className="mb-3 flex items-center gap-2">
-        <Sparkle className="h-4 w-4 text-ink-700" />
+        <Sparkle className="h-4 w-4 animate-spin text-ink-700 [animation-duration:3.5s]" />
         <h2 className="font-display text-sm font-semibold text-ink-900">Agent activity</h2>
         <span className="label ml-auto text-ink-500">Live</span>
       </div>
 
-      <div className="-mr-2 flex-1 space-y-3 overflow-y-auto pr-2">
+      <div ref={listRef} className="-mr-2 flex-1 space-y-3 overflow-y-auto pr-2">
         {messages.length === 0 && !thinking && (
           <p className="text-xs leading-relaxed text-ink-500">
             Clutch narrates every action it takes here — what it captured, prioritized, scheduled, and drafted.
@@ -99,7 +106,6 @@ export function ActivityFeed({
             </div>
           </div>
         )}
-        <div ref={endRef} />
       </div>
     </div>
   );

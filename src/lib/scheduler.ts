@@ -100,6 +100,19 @@ export function computeUrgency(task: Task, now: Date): number {
   return Math.round(score - effortPenalty);
 }
 
+/** Tasks that are overdue or at risk of slipping (deadline within the time they need). */
+export function slippage(tasks: Task[], now: Date): { overdue: Task[]; atRisk: Task[] } {
+  const overdue: Task[] = [];
+  const atRisk: Task[] = [];
+  for (const t of tasks) {
+    if (t.status === 'done' || !t.deadline) continue;
+    const msLeft = Date.parse(t.deadline) - now.getTime();
+    if (msLeft < 0) overdue.push(t);
+    else if (msLeft < (t.estimateMins || 45) * 60 * 1000 * 1.5 || msLeft < 12 * 3600 * 1000) atRisk.push(t);
+  }
+  return { overdue, atRisk };
+}
+
 export function formatDeadline(iso?: string): { label: string; tone: 'red' | 'amber' | 'green' | 'muted' } {
   if (!iso) return { label: 'No deadline', tone: 'muted' };
   const d = new Date(iso);

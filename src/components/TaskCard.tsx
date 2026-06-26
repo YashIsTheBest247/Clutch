@@ -1,6 +1,6 @@
 import type { Task } from '../types';
 import { formatDeadline } from '../lib/scheduler';
-import { ArrowUpRight, Check, Clock, Doc, Layers } from './icons';
+import { ArrowUpRight, Check, Clock, Doc, Layers, Play } from './icons';
 
 const priorityChip: Record<string, string> = {
   critical: 'bg-ink-900 text-paper-50',
@@ -21,12 +21,14 @@ export function TaskCard({
   onStatus,
   onOpenDeliverable,
   onDelete,
+  onFocus,
 }: {
   task: Task;
   onToggleSub: (subId: string) => void;
   onStatus: (status: Task['status']) => void;
   onOpenDeliverable: () => void;
   onDelete: () => void;
+  onFocus?: () => void;
 }) {
   const dl = formatDeadline(task.deadline);
   const done = task.status === 'done';
@@ -110,6 +112,11 @@ export function TaskCard({
             {task.deliverable && (
               <button onClick={onOpenDeliverable} className="btn-primary !py-1.5 !text-xs">
                 <Doc className="h-3.5 w-3.5" /> Open {task.deliverable.kind}
+              </button>
+            )}
+            {!done && onFocus && (
+              <button onClick={onFocus} className="btn-ghost !py-1.5 !text-xs" title="Start a focus session">
+                <Play className="h-3 w-3" /> Focus
               </button>
             )}
             {!done && task.status !== 'in_progress' && (

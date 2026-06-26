@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from './lib/store';
 import { hasApiKey } from './lib/gemini';
-import { formatDeadline } from './lib/scheduler';
+import { formatDeadline, slippage } from './lib/scheduler';
 import { useCountUp, useInView } from './lib/anim';
+import { useTTS } from './lib/useTTS';
 import type { Task } from './types';
 import { Composer } from './components/Composer';
 import { TaskCard } from './components/TaskCard';
@@ -11,7 +12,8 @@ import { ActivityFeed } from './components/ActivityFeed';
 import { DeliverableModal } from './components/DeliverableModal';
 import { Settings } from './components/Settings';
 import { Reveal } from './components/Reveal';
-import { ArrowUpRight, Calendar, Check, Doc, Sparkle } from './components/icons';
+import { FocusTimer } from './components/FocusTimer';
+import { ArrowUpRight, Calendar, Check, Doc, Flame, Play, Speaker, Sparkle } from './components/icons';
 import { Logo } from './components/Logo';
 
 function StatCard({
@@ -20,20 +22,23 @@ function StatCard({
   value,
   highlight,
   delay = 0,
+  onClick,
 }: {
   label: string;
   caption: string;
   value: number;
   highlight?: boolean;
   delay?: number;
+  onClick?: () => void;
 }) {
   const { ref, inView } = useInView<HTMLDivElement>();
   const shown = useCountUp(value, inView);
   return (
-    <div
-      ref={ref}
+    <button
+      ref={ref as any}
+      onClick={onClick}
       style={{ transitionDelay: `${delay}ms` }}
-      className={`reveal lift flex min-h-[124px] flex-col justify-between rounded-3xl border p-4 sm:min-h-[150px] ${
+      className={`reveal lift group flex min-h-[124px] flex-col justify-between rounded-3xl border p-4 text-left sm:min-h-[150px] ${
         inView ? 'in' : ''
       } ${
         highlight
@@ -43,11 +48,15 @@ function StatCard({
     >
       <div className="flex items-start justify-between">
         <span className={`label ${highlight ? 'text-paper-50/70' : 'text-ink-500'}`}>{label}</span>
-        <span className={`text-[11px] ${highlight ? 'text-paper-50/50' : 'text-ink-500'}`}>/{value || 0}</span>
+        <ArrowUpRight
+          className={`h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100 ${
+            highlight ? 'text-paper-50/70' : 'text-ink-400'
+          }`}
+        />
       </div>
       <p className={`mt-1 text-[11px] ${highlight ? 'text-paper-50/70' : 'text-ink-500'}`}>{caption}</p>
       <div className="mt-auto font-display text-3xl font-bold tabular-nums tracking-tight sm:text-4xl">{shown}</div>
-    </div>
+    </button>
   );
 }
 
@@ -56,6 +65,53 @@ export default function App() {
   const { state, thinking, liveActions } = store;
   const [openTask, setOpenTask] = useState<Task | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [focusTask, setFocusTask] = useState<Task | null>(null);
+  const streak = state.streak?.count ?? 0;
+
+  // Voice-out: speak the agent's daily briefing (and optionally every reply).
+  const tts = useTTS();
+  const [voiceOut, setVoiceOut] = useState(false);
+  const lastSpokenRef = useRef<string | null>(null);
+  const forceSpeakRef = useRef(false);
+
+  useEffect(() => {
+    const msgs = state.messages;
+    const last = msgs[msgs.length - 1];
+    if (!last || last.role !== 'agent' || last.id === lastSpokenRef.current) return;
+    lastSpokenRef.current = last.id;
+    if (voiceOut || forceSpeakRef.current) {
+      forceSpeakRef.current = false;
+      tts.speak(last.content);
+    }
+  }, [state.messages, voiceOut, tts]);
+
+  const requestBriefing = () => {
+    const now = new Date();
+    const { overdue, atRisk } = slippage(state.tasks, now);
+    const slip =
+      [
+        overdue.length ? `Overdue: ${overdue.map((t) => t.title).join('; ')}.` : '',
+        atRisk.length ? `At risk of slipping: ${atRisk.map((t) => t.title).join('; ')}.` : '',
+      ]
+        .filter(Boolean)
+        .join(' ') || 'Nothing is overdue yet.';
+    forceSpeakRef.current = true;
+    store.sendToAgent(
+      `Give me my briefing. Status — ${slip} Review every task against the time right now, call out what's slipping, rebuild my schedule if it helps, then tell me the ONE thing to do next. Keep it to ~4 short sentences I can listen to.`,
+    );
+  };
+
+  const toggleVoice = () => {
+    if (voiceOut) {
+      tts.stop();
+      setVoiceOut(false);
+    } else {
+      setVoiceOut(true);
+    }
+  };
+
+  const scrollToId = (id: string) =>
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   const open = state.tasks.filter((t) => t.status !== 'done');
   const sorted = useMemo(
@@ -82,14 +138,46 @@ export default function App() {
       {/* Header — clean pill nav */}
       <header className="sticky top-2 z-30 mb-5">
         <div className="flex items-center justify-between gap-2 rounded-full border border-ink-900/[0.06] bg-paper-50/80 px-3 py-2 shadow-soft backdrop-blur-md sm:px-4 sm:py-2.5">
-          <Logo markClassName="h-8 w-8 text-ink-900" />
-          <h1 className="sr-only">Clutch</h1>
+          <div className="flex items-center gap-2.5">
+            <Logo markClassName="h-8 w-8 text-ink-900" />
+            <h1 className="sr-only">Clutch</h1>
+            {streak > 0 && (
+              <span
+                className="chip border border-ink-900/10 bg-stone-100 text-ink-700"
+                title={`${streak}-day completion streak`}
+              >
+                <Flame className="h-3.5 w-3.5 text-signal-red" /> {streak}
+              </span>
+            )}
+          </div>
           <nav className="hidden items-center gap-7 text-sm text-ink-600 md:flex">
-            <span className="cursor-default transition-colors hover:text-ink-900">Priorities</span>
-            <span className="cursor-default transition-colors hover:text-ink-900">Plan</span>
-            <span className="cursor-default transition-colors hover:text-ink-900">Agent</span>
+            <button onClick={() => scrollToId('priorities')} className="transition-colors hover:text-ink-900">Priorities</button>
+            <button onClick={() => scrollToId('plan')} className="transition-colors hover:text-ink-900">Plan</button>
+            <button onClick={() => scrollToId('agent')} className="transition-colors hover:text-ink-900">Agent</button>
           </nav>
           <div className="flex items-center gap-2">
+            {tts.supported && (
+              <button
+                onClick={toggleVoice}
+                title={voiceOut ? 'Voice replies on' : 'Voice replies off'}
+                className={`hidden h-9 w-9 items-center justify-center rounded-full border transition-colors sm:flex ${
+                  voiceOut || tts.speaking
+                    ? 'border-transparent bg-ink-900 text-paper-50'
+                    : 'border-ink-900/15 bg-paper-50 text-ink-900 hover:border-ink-900/40'
+                }`}
+              >
+                <Speaker className={`h-4 w-4 ${tts.speaking ? 'animate-pulse' : ''}`} />
+              </button>
+            )}
+            <button
+              onClick={requestBriefing}
+              disabled={thinking || open.length === 0}
+              title="Spoken daily briefing"
+              className="btn-ghost !px-3 !text-xs"
+            >
+              <Play className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Briefing</span>
+            </button>
             <button
               onClick={() => store.sendToAgent('Review everything and build the best plan for me right now.')}
               disabled={thinking || open.length === 0}
@@ -165,6 +253,9 @@ export default function App() {
                     Do it with me <ArrowUpRight className="h-4 w-4" />
                   </button>
                 )}
+                <button onClick={() => setFocusTask(top)} className="btn-ghost flex-1 md:flex-none">
+                  <Play className="h-3.5 w-3.5" /> Focus
+                </button>
                 <button onClick={() => store.setTaskStatus(top.id, 'done')} className="btn-ghost flex-1 md:flex-none">
                   <Check className="h-4 w-4" /> Done
                 </button>
@@ -176,10 +267,10 @@ export default function App() {
 
       {/* Stats — count up + stagger in on scroll */}
       <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="Open tasks" caption="Awaiting action." value={open.length} highlight delay={0} />
-        <StatCard label="Due in 24h" caption="Deadline pressure." value={dueSoon} delay={80} />
-        <StatCard label="Focus blocks" caption="Scheduled by Clutch." value={state.schedule.length} delay={160} />
-        <StatCard label="Drafts ready" caption="Deliverables generated." value={deliverables} delay={240} />
+        <StatCard label="Open tasks" caption="Awaiting action." value={open.length} highlight delay={0} onClick={() => scrollToId('priorities')} />
+        <StatCard label="Due in 24h" caption="Deadline pressure." value={dueSoon} delay={80} onClick={() => scrollToId('priorities')} />
+        <StatCard label="Focus blocks" caption="Scheduled by Clutch." value={state.schedule.length} delay={160} onClick={() => scrollToId('plan')} />
+        <StatCard label="Drafts ready" caption="Deliverables generated." value={deliverables} delay={240} onClick={() => scrollToId('priorities')} />
       </div>
 
       {/* Composer */}
@@ -190,7 +281,7 @@ export default function App() {
       {/* Main grid */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         {/* Tasks */}
-        <section className="lg:col-span-5">
+        <section id="priorities" className="scroll-mt-24 lg:col-span-4">
           <Reveal>
             <div className="mb-3 flex items-center gap-2 px-1">
               <h2 className="font-display text-sm font-semibold text-ink-900">Priorities</h2>
@@ -222,6 +313,7 @@ export default function App() {
                     onStatus={(s) => store.setTaskStatus(t.id, s)}
                     onOpenDeliverable={() => setOpenTask(t)}
                     onDelete={() => store.deleteTask(t.id)}
+                    onFocus={() => setFocusTask(t)}
                   />
                 </Reveal>
               ))}
@@ -230,14 +322,14 @@ export default function App() {
         </section>
 
         {/* Agenda */}
-        <section className="lg:col-span-3">
+        <section id="plan" className="scroll-mt-24 lg:col-span-4">
           <Reveal>
-            <Agenda blocks={state.schedule} />
+            <Agenda blocks={state.schedule} tasks={state.tasks} />
           </Reveal>
         </section>
 
         {/* Activity */}
-        <section className="lg:col-span-4 lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)]">
+        <section id="agent" className="scroll-mt-24 lg:col-span-4 lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)]">
           <Reveal className="h-full">
             <div className="h-[420px] sm:h-[520px] lg:h-full">
               <ActivityFeed messages={state.messages} thinking={thinking} liveActions={liveActions} />
@@ -295,6 +387,13 @@ export default function App() {
         <p className="label mt-3 px-1 pb-4 text-ink-500">©2026 Clutch · All rights reserved</p>
       </footer>
 
+      {focusTask && (
+        <FocusTimer
+          task={focusTask}
+          onClose={() => setFocusTask(null)}
+          onComplete={() => store.setTaskStatus(focusTask.id, 'done')}
+        />
+      )}
       {openTask && <DeliverableModal task={openTask} onClose={() => setOpenTask(null)} />}
       {showSettings && (
         <Settings
