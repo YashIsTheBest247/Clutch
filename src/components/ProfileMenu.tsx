@@ -94,10 +94,10 @@ export function ProfileMenu({
             </div>
           </div>
           {renderSignIn && !user && (
-            <>
+            <div className="lg:hidden">
               <div className="my-1 h-px bg-ink-900/[0.06]" />
               <div ref={signInRef} className="px-3 py-1.5" />
-            </>
+            </div>
           )}
           <div className="my-1 h-px bg-ink-900/[0.06]" />
           <Item icon={<Gear className="h-4 w-4" />} label="Profile & preferences" onClick={act(onProfile)} />

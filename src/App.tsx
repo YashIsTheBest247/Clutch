@@ -20,6 +20,7 @@ import { Reveal } from './components/Reveal';
 import { FocusTimer } from './components/FocusTimer';
 import { ProfileMenu } from './components/ProfileMenu';
 import { ControlsMenu } from './components/ControlsMenu';
+import { NotesWidget } from './components/NotesWidget';
 import { GoogleSignInButton } from './components/GoogleSignInButton';
 import { AboutModal } from './components/AboutModal';
 import { InsightsModal } from './components/InsightsModal';
@@ -866,6 +867,7 @@ export default function App() {
           }}
         />
       )}
+      <NotesWidget onCapture={(t) => handleCompose(t)} focusActive={!!focusTask} />
       <Toaster toasts={toasts.toasts} onDismiss={toasts.dismiss} />
       {paletteOpen && <CommandPalette commands={commands} onClose={() => setPaletteOpen(false)} />}
       {showInsights && (
