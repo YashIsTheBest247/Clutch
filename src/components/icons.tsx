@@ -95,6 +95,12 @@ export const Note = ({ className = base }: P) => (
     <path d="M15 3v5h5M8 13h8M8 17h6" />
   </svg>
 );
+export const CurvedArrow = ({ className = base }: P) => (
+  <svg className={className} viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5 35C12 20 20 12 33 8.5" />
+    <path d="M24 8.5 33 7.5 32.5 17" />
+  </svg>
+);
 export const Menu = ({ className = base }: P) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M3 6h18M3 12h18M3 18h18" />

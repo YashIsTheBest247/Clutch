@@ -3,11 +3,11 @@ import type { AppState, UserProfile } from '../types';
 const KEY = 'clutch.state.v1';
 
 export const defaultProfile: UserProfile = {
-  name: 'Yash',
+  name: 'User',
   dayStartHour: 9,
   dayEndHour: 21,
   role: 'Student',
-  workStyle: 'I procrastinate, work best in 45-minute focused sprints, and like clear next steps.',
+  workStyle: 'I work best in focused 45-minute sprints and like clear next steps.',
 };
 
 export function emptyState(): AppState {

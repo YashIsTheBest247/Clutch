@@ -22,6 +22,7 @@ import { ProfileMenu } from './components/ProfileMenu';
 import { ControlsMenu } from './components/ControlsMenu';
 import { NotesWidget } from './components/NotesWidget';
 import { GoogleSignInButton } from './components/GoogleSignInButton';
+import { OnboardingHint } from './components/OnboardingHint';
 import { AboutModal } from './components/AboutModal';
 import { InsightsModal } from './components/InsightsModal';
 import { GoalsHabits } from './components/GoalsHabits';
@@ -123,11 +124,29 @@ export default function App() {
   const { theme, toggle: toggleTheme } = useTheme();
   const auth = useGoogleAuth();
 
+  // First-visit onboarding hint pointing at the profile button.
+  const [showHint, setShowHint] = useState(() => {
+    try {
+      return !localStorage.getItem('clutch.onboarded.v1');
+    } catch {
+      return false;
+    }
+  });
+  const dismissHint = () => {
+    setShowHint(false);
+    try {
+      localStorage.setItem('clutch.onboarded.v1', '1');
+    } catch {
+      /* noop */
+    }
+  };
+
   // Personalize from the Google account on sign-in.
   useEffect(() => {
     if (auth.user) {
       const n = auth.user.given_name || auth.user.name;
       if (n && state.profile.name !== n) store.setProfile({ name: n });
+      dismissHint();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.user?.sub]);
@@ -865,6 +884,15 @@ export default function App() {
             store.recordActual(focusTask.id, mins);
             handleStatus(focusTask, 'done');
           }}
+        />
+      )}
+      {showHint && (
+        <OnboardingHint
+          onAction={() => {
+            dismissHint();
+            setShowSettings(true);
+          }}
+          onDismiss={dismissHint}
         />
       )}
       <NotesWidget onCapture={(t) => handleCompose(t)} focusActive={!!focusTask} />

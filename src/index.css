@@ -236,6 +236,20 @@ body {
   animation: indeterminate 1.4s ease-in-out infinite;
 }
 
+/* Bob — gentle up/down to draw attention (onboarding arrow). */
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+.animate-bob {
+  animation: bob 1.6s ease-in-out infinite;
+}
+
 /* Pop — a satisfying check-off animation. */
 @keyframes pop {
   0% {
@@ -331,7 +345,8 @@ body {
   .animate-fade-up,
   .animate-twinkle,
   .animate-pop,
-  .animate-indeterminate {
+  .animate-indeterminate,
+  .animate-bob {
     animation: none !important;
   }
 }
