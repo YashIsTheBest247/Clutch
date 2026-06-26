@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from './lib/store';
 import { hasApiKey } from './lib/gemini';
-import { formatDeadline, slippage } from './lib/scheduler';
+import { formatDeadline, realityCheck, slippage } from './lib/scheduler';
 import { useCountUp, useInView } from './lib/anim';
 import { useTTS } from './lib/useTTS';
 import { useReminders } from './lib/useReminders';
+import { useConversation } from './lib/useConversation';
 import type { Task } from './types';
 import { Composer } from './components/Composer';
 import { TaskCard } from './components/TaskCard';
@@ -16,8 +17,11 @@ import { Reveal } from './components/Reveal';
 import { FocusTimer } from './components/FocusTimer';
 import { ProfileMenu } from './components/ProfileMenu';
 import { AboutModal } from './components/AboutModal';
+import { InsightsModal } from './components/InsightsModal';
 import { GoalsHabits } from './components/GoalsHabits';
-import { ArrowUpRight, Bell, Calendar, Check, Doc, Flame, Gear, Lifebuoy, Play, Speaker, Sparkle, X } from './components/icons';
+import { CommandPalette, type Command } from './components/CommandPalette';
+import { downloadICS, scheduleToICS } from './lib/calendar';
+import { ArrowUpRight, Bell, Calendar, Chart, Check, Doc, Flame, Gear, Info, Lifebuoy, Mic, Play, Speaker, Sparkle, Trash, X } from './components/icons';
 import { Logo } from './components/Logo';
 
 function StatCard({
@@ -70,6 +74,8 @@ export default function App() {
   const [openTask, setOpenTask] = useState<Task | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
+  const [showInsights, setShowInsights] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [focusTask, setFocusTask] = useState<Task | null>(null);
   const [planning, setPlanning] = useState(false);
   const [rescuing, setRescuing] = useState(false);
@@ -79,6 +85,20 @@ export default function App() {
   // Proactive: detect slipping work on load (deterministic, no API spend).
   const slip = useMemo(() => slippage(state.tasks, new Date()), [state.tasks]);
   const slipping = slip.overdue.length + slip.atRisk.length;
+
+  // Reality-Check: can the workload actually fit before the deadlines?
+  const reality = useMemo(() => realityCheck(state.tasks, state.profile, new Date()), [state.tasks, state.profile]);
+  const [realityDismissed, setRealityDismissed] = useState(false);
+  const fmtH = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m}m`);
+  const fixOvercommit = async () => {
+    if (thinking) return;
+    setTimeout(() => scrollToId('agent'), 80);
+    await store.sendToAgent(
+      `Reality check: I'm overcommitted — about ${fmtH(reality.committedMins)} of work but only ~${fmtH(
+        reality.availableMins,
+      )} of working time before ${reality.horizon}. Decide what to cut, defer, or trim so the essential things actually fit. Re-prioritize, rebuild my schedule, and tell me clearly what you cut/moved and why.`,
+    );
+  };
 
   // Context-aware browser reminders.
   const [remindersOn, setRemindersOn] = useState(false);
@@ -137,6 +157,36 @@ export default function App() {
     }
   };
 
+  // Hands-free conversation: speak → agent acts → speaks back → auto-listens again.
+  const [converseOn, setConverseOn] = useState(false);
+  const convo = useConversation((text) => {
+    if (text) store.sendToAgent(text);
+  });
+  const toggleConverse = () => {
+    if (converseOn) {
+      setConverseOn(false);
+      convo.stop();
+      tts.stop();
+    } else {
+      if (!convo.supported || !tts.supported) {
+        alert('Voice conversation needs a browser with speech recognition + synthesis (e.g. Chrome).');
+        return;
+      }
+      setConverseOn(true);
+      setVoiceOut(true);
+      setTimeout(() => scrollToId('agent'), 80);
+      convo.start();
+    }
+  };
+  // Resume listening once the agent has finished thinking and speaking.
+  useEffect(() => {
+    if (!converseOn || thinking || tts.speaking || convo.listening) return;
+    const id = setTimeout(() => {
+      if (converseOn && !thinking && !tts.speaking) convo.start();
+    }, 450);
+    return () => clearTimeout(id);
+  }, [converseOn, thinking, tts.speaking, convo.listening, convo]);
+
   const scrollToId = (id: string) =>
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
@@ -165,6 +215,20 @@ export default function App() {
     }
   };
 
+  const exportCalendar = () => downloadICS(scheduleToICS(state.schedule, state.tasks));
+
+  // ⌘K / Ctrl+K command palette.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setPaletteOpen((o) => !o);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   const open = state.tasks.filter((t) => t.status !== 'done');
   const sorted = useMemo(
     () =>
@@ -184,6 +248,22 @@ export default function App() {
   const nextAction = top?.subtasks.find((s) => !s.done)?.title ?? 'Make a focused start on this.';
   const hour = new Date().getHours();
   const greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+
+  const commands: Command[] = [
+    { id: 'plan', label: 'Plan my day', icon: <Sparkle className="h-4 w-4" />, run: planMyDay, disabled: open.length === 0 },
+    { id: 'rescue', label: 'Rescue me — triage everything', icon: <Lifebuoy className="h-4 w-4" />, run: rescueMe, disabled: open.length === 0 },
+    { id: 'brief', label: 'Spoken daily briefing', icon: <Play className="h-4 w-4" />, run: requestBriefing, disabled: open.length === 0 },
+    { id: 'cal', label: 'Export plan to calendar (.ics)', icon: <Calendar className="h-4 w-4" />, run: exportCalendar },
+    { id: 'insights', label: 'Open insights', icon: <Chart className="h-4 w-4" />, run: () => setShowInsights(true) },
+    { id: 'remind', label: 'Toggle browser reminders', icon: <Bell className="h-4 w-4" />, run: toggleReminders },
+    { id: 'voice', label: 'Toggle voice replies', icon: <Speaker className="h-4 w-4" />, run: toggleVoice },
+    { id: 'go-pri', label: 'Go to Priorities', hint: 'section', icon: <ArrowUpRight className="h-4 w-4" />, run: () => scrollToId('priorities') },
+    { id: 'go-plan', label: 'Go to Plan', hint: 'section', icon: <ArrowUpRight className="h-4 w-4" />, run: () => scrollToId('plan') },
+    { id: 'go-goals', label: 'Go to Goals & habits', hint: 'section', icon: <ArrowUpRight className="h-4 w-4" />, run: () => scrollToId('goals') },
+    { id: 'profile', label: 'Profile & preferences', icon: <Gear className="h-4 w-4" />, run: () => setShowSettings(true) },
+    { id: 'about', label: 'About Clutch', icon: <Info className="h-4 w-4" />, run: () => setShowAbout(true) },
+    { id: 'reset', label: 'Reset everything', icon: <Trash className="h-4 w-4" />, run: () => confirm('Clear all tasks, schedule and history?') && store.clearAll() },
+  ];
 
   return (
     <div className="mx-auto min-h-screen max-w-7xl px-3 py-4 sm:px-4 sm:py-5 lg:px-6">
@@ -212,6 +292,13 @@ export default function App() {
             <button onClick={() => scrollToId('priorities')} className="transition-colors hover:text-ink-900">Priorities</button>
             <button onClick={() => scrollToId('plan')} className="transition-colors hover:text-ink-900">Plan</button>
             <button onClick={() => scrollToId('agent')} className="transition-colors hover:text-ink-900">Agent</button>
+            <button
+              onClick={() => setPaletteOpen(true)}
+              title="Command palette"
+              className="rounded-lg border border-ink-900/15 px-2 py-1 text-[11px] font-semibold text-ink-500 transition-colors hover:border-ink-900/40 hover:text-ink-900"
+            >
+              ⌘K
+            </button>
           </nav>
           <div className="flex items-center gap-2">
             <button
@@ -236,6 +323,25 @@ export default function App() {
                 }`}
               >
                 <Speaker className={`h-4 w-4 ${tts.speaking ? 'animate-pulse' : ''}`} />
+              </button>
+            )}
+            {convo.supported && tts.supported && (
+              <button
+                onClick={toggleConverse}
+                title={converseOn ? 'End hands-free conversation' : 'Talk to Clutch (hands-free)'}
+                className={`relative flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${
+                  converseOn
+                    ? 'border-transparent bg-signal-red text-white'
+                    : 'border-ink-900/15 bg-paper-50 text-ink-900 hover:border-ink-900/40'
+                }`}
+              >
+                <Mic className="h-4 w-4" />
+                {convo.listening && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-signal-red opacity-75 animate-pulse-ring" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-signal-red" />
+                  </span>
+                )}
               </button>
             )}
             <button
@@ -277,6 +383,7 @@ export default function App() {
             <ProfileMenu
               profile={state.profile}
               onProfile={() => setShowSettings(true)}
+              onInsights={() => setShowInsights(true)}
               onAbout={() => setShowAbout(true)}
               onReset={() => {
                 if (confirm('Clear all tasks, schedule and history?')) store.clearAll();
@@ -326,6 +433,43 @@ export default function App() {
               >
                 <X className="h-3.5 w-3.5" />
               </button>
+            </div>
+          </div>
+        </Reveal>
+      )}
+
+      {/* Reality-Check — honest capacity warning */}
+      {reality.overcommitted && !realityDismissed && !thinking && (
+        <Reveal className="mb-4">
+          <div className="rounded-2xl border border-signal-red/30 bg-signal-red/[0.07] p-4">
+            <div className="flex items-start gap-3">
+              <Lifebuoy className="mt-0.5 h-5 w-5 shrink-0 text-signal-red" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-ink-900">Reality check — you're overcommitted</p>
+                <p className="mt-0.5 text-xs text-ink-700">
+                  ~<span className="font-semibold">{fmtH(reality.committedMins)}</span> of work but only ~
+                  <span className="font-semibold">{fmtH(reality.availableMins)}</span> before {reality.horizon} —
+                  about <span className="font-semibold text-signal-red">{fmtH(reality.deficitMins)}</span> short.
+                </p>
+                {reality.cut.length > 0 && (
+                  <p className="mt-1 text-xs text-ink-600">
+                    To make it, consider cutting/moving:{' '}
+                    <span className="text-ink-800">{reality.cut.map((t) => t.title).join(', ')}</span>.
+                  </p>
+                )}
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <button onClick={fixOvercommit} disabled={thinking} className="btn !py-1.5 !text-xs bg-signal-red text-white hover:opacity-90">
+                  <Lifebuoy className="h-3.5 w-3.5" /> Help me fix this
+                </button>
+                <button
+                  onClick={() => setRealityDismissed(true)}
+                  className="rounded-full p-1.5 text-ink-500 hover:bg-ink-900/5 hover:text-ink-900"
+                  aria-label="Dismiss"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
             </div>
           </div>
         </Reveal>
@@ -438,6 +582,7 @@ export default function App() {
                     onFocus={() => setFocusTask(t)}
                     goals={state.goals}
                     onAssignGoal={(gid) => store.assignTaskGoal(t.id, gid)}
+                    onSetRecur={(r) => store.setTaskRecur(t.id, r)}
                   />
                 </Reveal>
               ))}
@@ -532,11 +677,29 @@ export default function App() {
         <p className="label mt-3 px-1 pb-4 text-ink-500">©2026 Clutch · All rights reserved</p>
       </footer>
 
+      {converseOn && (
+        <div className="fixed bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-full bg-ink-900 px-4 py-2 text-xs font-medium text-paper-50 shadow-panel">
+          <Mic className="h-3.5 w-3.5" />
+          {thinking ? 'Clutch is working…' : tts.speaking ? 'Clutch is speaking…' : convo.listening ? 'Listening…' : 'Ready'}
+          <button onClick={toggleConverse} className="ml-1 rounded-full bg-white/15 px-2 py-0.5 hover:bg-white/25">
+            End
+          </button>
+        </div>
+      )}
       {focusTask && (
         <FocusTimer
           task={focusTask}
           onClose={() => setFocusTask(null)}
           onComplete={() => store.setTaskStatus(focusTask.id, 'done')}
+        />
+      )}
+      {paletteOpen && <CommandPalette commands={commands} onClose={() => setPaletteOpen(false)} />}
+      {showInsights && (
+        <InsightsModal
+          tasks={state.tasks}
+          habits={state.habits ?? []}
+          streak={streak}
+          onClose={() => setShowInsights(false)}
         />
       )}
       {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}

@@ -100,6 +100,83 @@ export function computeUrgency(task: Task, now: Date): number {
   return Math.round(score - effortPenalty);
 }
 
+/** Working minutes available between two times, given the user's working hours. */
+export function workingMinutesBetween(start: Date, end: Date, p: UserProfile): number {
+  if (end <= start) return 0;
+  let total = 0;
+  const cur = new Date(start);
+  let guard = 0;
+  while (cur < end && guard++ < 90) {
+    const dayStart = new Date(cur);
+    dayStart.setHours(p.dayStartHour, 0, 0, 0);
+    const dayEnd = new Date(cur);
+    dayEnd.setHours(p.dayEndHour, 0, 0, 0);
+    const segStart = new Date(Math.max(cur.getTime(), dayStart.getTime()));
+    const segEnd = new Date(Math.min(end.getTime(), dayEnd.getTime()));
+    if (segEnd > segStart) total += (segEnd.getTime() - segStart.getTime()) / 60000;
+    cur.setDate(cur.getDate() + 1);
+    cur.setHours(p.dayStartHour, 0, 0, 0);
+  }
+  return Math.round(total);
+}
+
+export interface RealityCheck {
+  overcommitted: boolean;
+  /** Minutes you're short by at the tightest point. */
+  deficitMins: number;
+  committedMins: number;
+  availableMins: number;
+  /** Human label of the deadline where the crunch is worst. */
+  horizon?: string;
+  /** Lowest-value tasks to cut or move to make the rest fit. */
+  cut: Task[];
+}
+
+/**
+ * Honest capacity math: walk deadlines earliest-first and check whether the
+ * cumulative work required can actually fit in the available working hours.
+ * If not, suggest the lowest-priority tasks to cut/move.
+ */
+export function realityCheck(tasks: Task[], p: UserProfile, now: Date): RealityCheck {
+  const open = tasks
+    .filter((t) => t.status !== 'done' && t.deadline)
+    .sort((a, b) => Date.parse(a.deadline!) - Date.parse(b.deadline!));
+
+  let cum = 0;
+  let worst = { deficit: 0, committed: 0, available: 0, deadline: '' };
+  for (const t of open) {
+    cum += t.estimateMins || 45;
+    const avail = workingMinutesBetween(now, new Date(t.deadline!), p);
+    const deficit = cum - avail;
+    if (deficit > worst.deficit) worst = { deficit, committed: cum, available: avail, deadline: t.deadline! };
+  }
+
+  const prRank: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
+  const cut: Task[] = [];
+  if (worst.deficit > 0 && worst.deadline) {
+    const dueByHorizon = open
+      .filter((t) => Date.parse(t.deadline!) <= Date.parse(worst.deadline))
+      .sort((a, b) => prRank[a.priority] - prRank[b.priority] || (b.estimateMins || 0) - (a.estimateMins || 0));
+    let need = worst.deficit;
+    for (const t of dueByHorizon) {
+      if (need <= 0) break;
+      cut.push(t);
+      need -= t.estimateMins || 45;
+    }
+  }
+
+  return {
+    overcommitted: worst.deficit > 0,
+    deficitMins: Math.max(0, Math.round(worst.deficit)),
+    committedMins: Math.round(worst.committed),
+    availableMins: Math.round(worst.available),
+    horizon: worst.deadline
+      ? new Date(worst.deadline).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' })
+      : undefined,
+    cut,
+  };
+}
+
 /** Tasks that are overdue or at risk of slipping (deadline within the time they need). */
 export function slippage(tasks: Task[], now: Date): { overdue: Task[]; atRisk: Task[] } {
   const overdue: Task[] = [];

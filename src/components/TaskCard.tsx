@@ -24,6 +24,7 @@ export function TaskCard({
   onFocus,
   goals,
   onAssignGoal,
+  onSetRecur,
 }: {
   task: Task;
   onToggleSub: (subId: string) => void;
@@ -33,6 +34,7 @@ export function TaskCard({
   onFocus?: () => void;
   goals?: Goal[];
   onAssignGoal?: (goalId?: string) => void;
+  onSetRecur?: (recur?: Task['recur']) => void;
 }) {
   const dl = formatDeadline(task.deadline);
   const done = task.status === 'done';
@@ -126,6 +128,19 @@ export function TaskCard({
                     {g.title}
                   </option>
                 ))}
+              </select>
+            )}
+            {!done && onSetRecur && (
+              <select
+                value={task.recur ?? ''}
+                onChange={(e) => onSetRecur((e.target.value || undefined) as Task['recur'])}
+                title="Repeat this task"
+                className="rounded-full border border-ink-900/15 bg-paper-50 px-2.5 py-1.5 text-[11px] text-ink-600 outline-none focus:border-ink-900/40"
+              >
+                <option value="">One-off</option>
+                <option value="daily">Daily</option>
+                <option value="weekdays">Weekdays</option>
+                <option value="weekly">Weekly</option>
               </select>
             )}
             {task.deliverable && (

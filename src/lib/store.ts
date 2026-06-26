@@ -5,6 +5,19 @@ import { runAgent, type AgentImage } from './agent';
 import { computeUrgency } from './scheduler';
 import { fireConfetti } from './confetti';
 
+/** Next deadline for a recurring task (keeps the time of day). */
+function nextOccurrence(iso: string | undefined, recur: NonNullable<Task['recur']>): string | undefined {
+  const base = iso ? new Date(iso) : new Date();
+  if (recur === 'weekly') base.setDate(base.getDate() + 7);
+  else {
+    base.setDate(base.getDate() + 1);
+    if (recur === 'weekdays') {
+      while (base.getDay() === 0 || base.getDay() === 6) base.setDate(base.getDate() + 1);
+    }
+  }
+  return base.toISOString();
+}
+
 export interface Store {
   state: AppState;
   thinking: boolean;
@@ -16,6 +29,7 @@ export interface Store {
   setTaskStatus: (taskId: string, status: Task['status']) => void;
   deleteTask: (taskId: string) => void;
   assignTaskGoal: (taskId: string, goalId?: string) => void;
+  setTaskRecur: (taskId: string, recur?: Task['recur']) => void;
   addGoal: (title: string) => void;
   deleteGoal: (id: string) => void;
   addHabit: (title: string) => void;
@@ -123,20 +137,35 @@ export function useStore(): Store {
         }
         fireConfetti();
       }
-      return {
-        ...s,
-        streak,
-        tasks: s.tasks.map((t) =>
-          t.id !== taskId
-            ? t
-            : {
-                ...t,
-                status,
-                subtasks: status === 'done' ? t.subtasks.map((su) => ({ ...su, done: true })) : t.subtasks,
-              },
-        ),
-      };
+      const tasks = s.tasks.map((t) =>
+        t.id !== taskId
+          ? t
+          : {
+              ...t,
+              status,
+              subtasks: status === 'done' ? t.subtasks.map((su) => ({ ...su, done: true })) : t.subtasks,
+            },
+      );
+      // Recurring tasks spawn their next occurrence on completion.
+      const src = s.tasks.find((t) => t.id === taskId);
+      if (completing && src?.recur) {
+        tasks.push({
+          ...src,
+          id: uid('task'),
+          status: 'todo',
+          subtasks: src.subtasks.map((su) => ({ ...su, id: uid('sub'), done: false })),
+          deliverable: undefined,
+          scheduledFor: undefined,
+          deadline: nextOccurrence(src.deadline, src.recur),
+          createdAt: new Date().toISOString(),
+        });
+      }
+      return { ...s, streak, tasks };
     });
+  }, []);
+
+  const setTaskRecur = useCallback((taskId: string, recur?: Task['recur']) => {
+    setState((s) => ({ ...s, tasks: s.tasks.map((t) => (t.id === taskId ? { ...t, recur } : t)) }));
   }, []);
 
   const deleteTask = useCallback((taskId: string) => {
@@ -226,6 +255,7 @@ export function useStore(): Store {
     setTaskStatus,
     deleteTask,
     assignTaskGoal,
+    setTaskRecur,
     addGoal,
     deleteGoal,
     addHabit,

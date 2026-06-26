@@ -31,6 +31,8 @@ export interface Task {
   scheduledFor?: string;
   /** Optional goal this task contributes to. */
   goalId?: string;
+  /** If set, completing the task spawns the next occurrence. */
+  recur?: 'daily' | 'weekdays' | 'weekly';
   createdAt: string;
   /** RICE-style composite the agent computes for ordering. */
   urgencyScore?: number;

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 import type { UserProfile } from '../types';
-import { Gear, Info, Trash } from './icons';
+import { Chart, Gear, Info, Trash } from './icons';
 
 function Item({
   icon,
@@ -30,12 +30,14 @@ export function ProfileMenu({
   profile,
   children,
   onProfile,
+  onInsights,
   onAbout,
   onReset,
 }: {
   profile: UserProfile;
   children: ReactElement; // the avatar trigger
   onProfile: () => void;
+  onInsights: () => void;
   onAbout: () => void;
   onReset: () => void;
 }) {
@@ -75,6 +77,7 @@ export function ProfileMenu({
           </div>
           <div className="my-1 h-px bg-ink-900/[0.06]" />
           <Item icon={<Gear className="h-4 w-4" />} label="Profile & preferences" onClick={act(onProfile)} />
+          <Item icon={<Chart className="h-4 w-4" />} label="Insights" onClick={act(onInsights)} />
           <Item icon={<Info className="h-4 w-4" />} label="About Clutch" onClick={act(onAbout)} />
           <div className="my-1 h-px bg-ink-900/[0.06]" />
           <Item icon={<Trash className="h-4 w-4" />} label="Reset everything" danger onClick={act(onReset)} />
