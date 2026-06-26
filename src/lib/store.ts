@@ -28,8 +28,11 @@ export interface Store {
   toggleSubtask: (taskId: string, subId: string) => void;
   setTaskStatus: (taskId: string, status: Task['status']) => void;
   deleteTask: (taskId: string) => void;
+  restoreTask: (task: Task) => void;
+  restoreAll: (snapshot: Partial<AppState>) => void;
   assignTaskGoal: (taskId: string, goalId?: string) => void;
   setTaskRecur: (taskId: string, recur?: Task['recur']) => void;
+  recordActual: (taskId: string, mins: number) => void;
   addGoal: (title: string) => void;
   deleteGoal: (id: string) => void;
   addHabit: (title: string) => void;
@@ -168,12 +171,40 @@ export function useStore(): Store {
     setState((s) => ({ ...s, tasks: s.tasks.map((t) => (t.id === taskId ? { ...t, recur } : t)) }));
   }, []);
 
+  // Log real focused minutes and learn the user's estimate accuracy.
+  const recordActual = useCallback((taskId: string, mins: number) => {
+    if (mins <= 0) return;
+    setState((s) => {
+      const t = s.tasks.find((x) => x.id === taskId);
+      let calibration = s.calibration ?? { factor: 1, samples: 0 };
+      if (t && t.estimateMins > 0) {
+        const ratio = Math.min(4, Math.max(0.25, mins / t.estimateMins));
+        const factor =
+          Math.round(((calibration.factor * calibration.samples + ratio) / (calibration.samples + 1)) * 100) / 100;
+        calibration = { factor, samples: calibration.samples + 1 };
+      }
+      return {
+        ...s,
+        calibration,
+        tasks: s.tasks.map((x) => (x.id === taskId ? { ...x, actualMins: (x.actualMins || 0) + mins } : x)),
+      };
+    });
+  }, []);
+
   const deleteTask = useCallback((taskId: string) => {
     setState((s) => ({
       ...s,
       tasks: s.tasks.filter((t) => t.id !== taskId),
       schedule: s.schedule.filter((b) => b.taskId !== taskId),
     }));
+  }, []);
+
+  const restoreTask = useCallback((task: Task) => {
+    setState((s) => (s.tasks.some((t) => t.id === task.id) ? s : { ...s, tasks: [...s.tasks, task] }));
+  }, []);
+
+  const restoreAll = useCallback((snapshot: Partial<AppState>) => {
+    setState((s) => ({ ...s, ...snapshot }));
   }, []);
 
   const assignTaskGoal = useCallback((taskId: string, goalId?: string) => {
@@ -254,8 +285,11 @@ export function useStore(): Store {
     toggleSubtask,
     setTaskStatus,
     deleteTask,
+    restoreTask,
+    restoreAll,
     assignTaskGoal,
     setTaskRecur,
+    recordActual,
     addGoal,
     deleteGoal,
     addHabit,

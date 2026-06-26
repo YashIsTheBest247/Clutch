@@ -37,10 +37,7 @@ export function AboutModal({ onClose }: { onClose: () => void }) {
           ))}
         </ul>
 
-        <div className="mt-5 border-t border-ink-900/[0.06] pt-3">
-          <p className="label text-ink-900">Built with</p>
-          <p className="mt-1 text-xs text-ink-600">Gemini 2.5 Flash · Google AI Studio · Google Cloud Run</p>
-        </div>
+        
       </div>
     </div>
   );

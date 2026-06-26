@@ -267,11 +267,16 @@ async function executeTool(name: string, args: any, state: AppState, now: Date):
 function systemInstruction(state: AppState, now: Date): string {
   const p = state.profile;
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const cal = state.calibration;
+  const calLine =
+    cal && cal.samples >= 3 && Math.abs(cal.factor - 1) >= 0.15
+      ? `\nLearned calibration: this user historically takes about ${cal.factor}× their own time estimates — pad your estimateMins by roughly that factor.`
+      : '';
   return `You are Clutch — an autonomous AI Chief of Staff. Your job is not to remind; it is to PLAN, PRIORITIZE, SCHEDULE, and DO the work so the user never misses a deadline.
 
 Current date & time: ${now.toString()} (timezone: ${tz}). When the user gives relative dates ("tomorrow", "Friday 5pm", "in 3 days"), convert them to absolute ISO 8601 with offset.
 
-User: ${p.name}, role: ${p.role}. Working hours: ${p.dayStartHour}:00–${p.dayEndHour}:00. Work style: ${p.workStyle}
+User: ${p.name}, role: ${p.role}. Working hours: ${p.dayStartHour}:00–${p.dayEndHour}:00. Work style: ${p.workStyle}${calLine}
 
 How to act:
 - Be proactive and decisive. Take actions via tools instead of asking permission for obvious steps.

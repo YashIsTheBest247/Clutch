@@ -18,11 +18,13 @@ export function InsightsModal({
   tasks,
   habits,
   streak,
+  calibration,
   onClose,
 }: {
   tasks: Task[];
   habits: Habit[];
   streak: number;
+  calibration?: { factor: number; samples: number };
   onClose: () => void;
 }) {
   const [insight, setInsight] = useState('');
@@ -107,11 +109,22 @@ export function InsightsModal({
           )}
         </div>
 
-        {m.bestHabit > 0 && (
-          <p className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-3 py-1 text-xs text-ink-700">
-            <Flame className="h-3.5 w-3.5 text-signal-red" /> Best habit streak: {m.bestHabit} days
-          </p>
-        )}
+        <div className="mt-4 flex flex-wrap gap-2">
+          {m.bestHabit > 0 && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-3 py-1 text-xs text-ink-700">
+              <Flame className="h-3.5 w-3.5 text-signal-red" /> Best habit streak: {m.bestHabit} days
+            </span>
+          )}
+          {calibration && calibration.samples >= 1 && (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-3 py-1 text-xs text-ink-700"
+              title="Learned from your focus sessions"
+            >
+              <Chart className="h-3.5 w-3.5 text-ink-700" /> You take ~{calibration.factor}× your estimates
+              <span className="text-ink-400">({calibration.samples})</span>
+            </span>
+          )}
+        </div>
 
         <div className="mt-5 border-t border-ink-900/[0.06] pt-4">
           <div className="flex items-center justify-between gap-2">

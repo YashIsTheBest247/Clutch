@@ -18,6 +18,8 @@ export interface Task {
   deadline?: string;
   /** Minutes of focused effort the agent estimates this needs. */
   estimateMins: number;
+  /** Actual focused minutes logged (from focus sessions) — feeds calibration. */
+  actualMins?: number;
   priority: Priority;
   status: TaskStatus;
   /** Free-form tag, e.g. "CS101", "Finance", "Job". */
@@ -110,4 +112,6 @@ export interface AppState {
   streak?: Streak;
   goals?: Goal[];
   habits?: Habit[];
+  /** Learned ratio of actual time to estimated time (1 = perfectly calibrated). */
+  calibration?: { factor: number; samples: number };
 }

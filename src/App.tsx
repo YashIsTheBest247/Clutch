@@ -6,6 +6,7 @@ import { useCountUp, useInView } from './lib/anim';
 import { useTTS } from './lib/useTTS';
 import { useReminders } from './lib/useReminders';
 import { useConversation } from './lib/useConversation';
+import { useToasts } from './lib/useToasts';
 import type { Task } from './types';
 import { Composer } from './components/Composer';
 import { TaskCard } from './components/TaskCard';
@@ -20,8 +21,9 @@ import { AboutModal } from './components/AboutModal';
 import { InsightsModal } from './components/InsightsModal';
 import { GoalsHabits } from './components/GoalsHabits';
 import { CommandPalette, type Command } from './components/CommandPalette';
+import { Toaster } from './components/Toaster';
 import { downloadICS, scheduleToICS } from './lib/calendar';
-import { ArrowUpRight, Bell, Calendar, Chart, Check, Doc, Flame, Gear, Info, Lifebuoy, Mic, Play, Speaker, Sparkle, Trash, X } from './components/icons';
+import { ArrowUpRight, Bell, Calendar, Chart, Check, Doc, Flame, Gear, Github, Globe, Info, Lifebuoy, Linkedin, Mic, Play, Speaker, Sparkle, Trash, X } from './components/icons';
 import { Logo } from './components/Logo';
 
 function StatCard({
@@ -81,6 +83,31 @@ export default function App() {
   const [rescuing, setRescuing] = useState(false);
   const [nudgeDismissed, setNudgeDismissed] = useState(false);
   const streak = state.streak?.count ?? 0;
+  const toasts = useToasts();
+
+  // Undoable task actions.
+  const removeTask = (t: Task) => {
+    store.deleteTask(t.id);
+    toasts.push('Task removed', { actionLabel: 'Undo', onAction: () => store.restoreTask(t) });
+  };
+  const handleStatus = (t: Task, s: Task['status']) => {
+    store.setTaskStatus(t.id, s);
+    if (s === 'done') {
+      toasts.push('Task completed 🎉', { actionLabel: 'Undo', onAction: () => store.setTaskStatus(t.id, 'todo') });
+    }
+  };
+  const resetAll = () => {
+    const snap = {
+      tasks: state.tasks,
+      schedule: state.schedule,
+      messages: state.messages,
+      goals: state.goals,
+      habits: state.habits,
+      streak: state.streak,
+    };
+    store.clearAll();
+    toasts.push('Everything cleared', { actionLabel: 'Undo', onAction: () => store.restoreAll(snap) });
+  };
 
   // Proactive: detect slipping work on load (deterministic, no API spend).
   const slip = useMemo(() => slippage(state.tasks, new Date()), [state.tasks]);
@@ -217,6 +244,14 @@ export default function App() {
 
   const exportCalendar = () => downloadICS(scheduleToICS(state.schedule, state.tasks));
 
+  const explainPlan = async () => {
+    if (thinking || open.length === 0) return;
+    setTimeout(() => scrollToId('agent'), 80);
+    await store.sendToAgent(
+      'Explain why you ordered and scheduled my tasks the way you did — the reasoning behind the top priorities and the plan. Be concise: a short bullet list.',
+    );
+  };
+
   // ⌘K / Ctrl+K command palette.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -253,6 +288,7 @@ export default function App() {
     { id: 'plan', label: 'Plan my day', icon: <Sparkle className="h-4 w-4" />, run: planMyDay, disabled: open.length === 0 },
     { id: 'rescue', label: 'Rescue me — triage everything', icon: <Lifebuoy className="h-4 w-4" />, run: rescueMe, disabled: open.length === 0 },
     { id: 'brief', label: 'Spoken daily briefing', icon: <Play className="h-4 w-4" />, run: requestBriefing, disabled: open.length === 0 },
+    { id: 'why', label: 'Why this plan? — explain the ordering', icon: <Info className="h-4 w-4" />, run: explainPlan, disabled: open.length === 0 },
     { id: 'cal', label: 'Export plan to calendar (.ics)', icon: <Calendar className="h-4 w-4" />, run: exportCalendar },
     { id: 'insights', label: 'Open insights', icon: <Chart className="h-4 w-4" />, run: () => setShowInsights(true) },
     { id: 'remind', label: 'Toggle browser reminders', icon: <Bell className="h-4 w-4" />, run: toggleReminders },
@@ -262,7 +298,7 @@ export default function App() {
     { id: 'go-goals', label: 'Go to Goals & habits', hint: 'section', icon: <ArrowUpRight className="h-4 w-4" />, run: () => scrollToId('goals') },
     { id: 'profile', label: 'Profile & preferences', icon: <Gear className="h-4 w-4" />, run: () => setShowSettings(true) },
     { id: 'about', label: 'About Clutch', icon: <Info className="h-4 w-4" />, run: () => setShowAbout(true) },
-    { id: 'reset', label: 'Reset everything', icon: <Trash className="h-4 w-4" />, run: () => confirm('Clear all tasks, schedule and history?') && store.clearAll() },
+    { id: 'reset', label: 'Reset everything', icon: <Trash className="h-4 w-4" />, run: resetAll },
   ];
 
   return (
@@ -385,9 +421,7 @@ export default function App() {
               onProfile={() => setShowSettings(true)}
               onInsights={() => setShowInsights(true)}
               onAbout={() => setShowAbout(true)}
-              onReset={() => {
-                if (confirm('Clear all tasks, schedule and history?')) store.clearAll();
-              }}
+              onReset={resetAll}
             >
               <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-ink-900/15 bg-paper-50 py-1 pl-1 pr-2 transition-colors hover:border-ink-900/40">
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ink-900 text-[11px] font-bold text-paper-50">
@@ -522,7 +556,7 @@ export default function App() {
                 <button onClick={() => setFocusTask(top)} className="btn-ghost flex-1 md:flex-none">
                   <Play className="h-3.5 w-3.5" /> Focus
                 </button>
-                <button onClick={() => store.setTaskStatus(top.id, 'done')} className="btn-ghost flex-1 md:flex-none">
+                <button onClick={() => handleStatus(top, 'done')} className="btn-ghost flex-1 md:flex-none">
                   <Check className="h-4 w-4" /> Done
                 </button>
               </div>
@@ -551,7 +585,17 @@ export default function App() {
           <Reveal>
             <div className="mb-3 flex items-center gap-2 px-1">
               <h2 className="font-display text-sm font-semibold text-ink-900">Priorities</h2>
-              <span className="chip ml-auto border border-ink-900/10 bg-paper-50 text-ink-600">
+              {open.length > 0 && (
+                <button
+                  onClick={explainPlan}
+                  disabled={thinking}
+                  title="Ask Clutch to explain its plan"
+                  className="btn-ghost ml-auto !px-2.5 !py-1 !text-[11px]"
+                >
+                  Why this plan?
+                </button>
+              )}
+              <span className={`chip border border-ink-900/10 bg-paper-50 text-ink-600 ${open.length ? '' : 'ml-auto'}`}>
                 {open.length} open · {done} done
               </span>
             </div>
@@ -576,9 +620,9 @@ export default function App() {
                   <TaskCard
                     task={t}
                     onToggleSub={(sid) => store.toggleSubtask(t.id, sid)}
-                    onStatus={(s) => store.setTaskStatus(t.id, s)}
+                    onStatus={(s) => handleStatus(t, s)}
                     onOpenDeliverable={() => setOpenTask(t)}
-                    onDelete={() => store.deleteTask(t.id)}
+                    onDelete={() => removeTask(t)}
                     onFocus={() => setFocusTask(t)}
                     goals={state.goals}
                     onAssignGoal={(gid) => store.assignTaskGoal(t.id, gid)}
@@ -654,18 +698,42 @@ export default function App() {
           <div className="card grid grid-cols-1 gap-6 p-6 text-xs sm:grid-cols-2 md:grid-cols-3">
             <div className="space-y-1.5">
               <p className="font-display text-sm font-semibold text-ink-900">clutch</p>
-              <p className="cursor-pointer text-ink-600 transition-colors hover:text-ink-900" onClick={() => setShowSettings(true)}>
+              <button onClick={() => setShowInsights(true)} className="block text-ink-600 transition-colors hover:text-ink-900">
+                Insights
+              </button>
+              <button onClick={() => setShowSettings(true)} className="block text-ink-600 transition-colors hover:text-ink-900">
                 Profile
-              </p>
-              <p className="text-ink-600">Privacy</p>
+              </button>
+              <button onClick={() => setShowAbout(true)} className="block text-ink-600 transition-colors hover:text-ink-900">
+                About
+              </button>
             </div>
-            <div className="text-ink-600">
-              <p className="label mb-1.5 text-ink-900">Built with</p>
-              <p>Gemini 2.5 Flash · Google AI Studio · Cloud Run</p>
-            </div>
-            <div className="sm:text-right">
+            <div>
               <p className="label mb-1.5 text-ink-900">Mission</p>
               <p className="text-ink-600">Turns last-minute panic into a plan.</p>
+            </div>
+            <div className="sm:text-right">
+              <p className="label mb-2 text-ink-900">Connect with the developer</p>
+              <p className="mb-2.5 text-ink-600">Yash Munshi</p>
+              <div className="flex items-center gap-2 sm:justify-end">
+                {[
+                  { href: 'https://yash-munshi.vercel.app/', label: 'Portfolio', Icon: Globe },
+                  { href: 'https://github.com/YashIsTheBest247', label: 'GitHub', Icon: Github },
+                  { href: 'https://www.linkedin.com/in/yash-munshi-a0408b337/', label: 'LinkedIn', Icon: Linkedin },
+                ].map(({ href, label, Icon }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer"
+                    title={label}
+                    aria-label={label}
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-ink-900/15 text-ink-700 transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 hover:border-transparent hover:bg-ink-900 hover:text-paper-50 hover:shadow-glow"
+                  >
+                    <Icon className="h-4 w-4" />
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
         </Reveal>
@@ -674,7 +742,10 @@ export default function App() {
             clutch
           </h2>
         </div>
-        <p className="label mt-3 px-1 pb-4 text-ink-500">©2026 Clutch · All rights reserved</p>
+        <div className="mt-3 flex flex-col gap-1 px-1 pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="label text-ink-500">©2026 Clutch · All rights reserved</p>
+         
+        </div>
       </footer>
 
       {converseOn && (
@@ -690,15 +761,20 @@ export default function App() {
         <FocusTimer
           task={focusTask}
           onClose={() => setFocusTask(null)}
-          onComplete={() => store.setTaskStatus(focusTask.id, 'done')}
+          onComplete={(mins) => {
+            store.recordActual(focusTask.id, mins);
+            handleStatus(focusTask, 'done');
+          }}
         />
       )}
+      <Toaster toasts={toasts.toasts} onDismiss={toasts.dismiss} />
       {paletteOpen && <CommandPalette commands={commands} onClose={() => setPaletteOpen(false)} />}
       {showInsights && (
         <InsightsModal
           tasks={state.tasks}
           habits={state.habits ?? []}
           streak={streak}
+          calibration={state.calibration}
           onClose={() => setShowInsights(false)}
         />
       )}
@@ -709,7 +785,7 @@ export default function App() {
           profile={state.profile}
           onSave={store.setProfile}
           onClose={() => setShowSettings(false)}
-          onClear={store.clearAll}
+          onClear={resetAll}
         />
       )}
     </div>

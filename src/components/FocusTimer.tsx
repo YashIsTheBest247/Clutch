@@ -12,7 +12,7 @@ export function FocusTimer({
 }: {
   task: Task;
   onClose: () => void;
-  onComplete: () => void;
+  onComplete: (focusedMins: number) => void;
 }) {
   const total = DEFAULT_MINS * 60;
   const [remaining, setRemaining] = useState(total);
@@ -42,6 +42,7 @@ export function FocusTimer({
   const mins = Math.floor(remaining / 60);
   const secs = remaining % 60;
   const pct = 1 - remaining / total;
+  const focusedMins = Math.max(1, Math.round((total - remaining) / 60));
   const R = 34;
   const C = 2 * Math.PI * R;
 
@@ -92,7 +93,7 @@ export function FocusTimer({
               <p className="text-xs text-paper-300">Session complete — nice work.</p>
               <button
                 onClick={() => {
-                  onComplete();
+                  onComplete(focusedMins);
                   onClose();
                 }}
                 className="btn-primary w-full !py-1.5 !text-xs"
@@ -112,8 +113,14 @@ export function FocusTimer({
                 {running ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
                 {running ? 'Pause' : 'Resume'}
               </button>
-              <button onClick={restart} className="btn w-full border border-white/20 text-paper-100 hover:border-white/50 !py-1.5 !text-xs">
-                Reset
+              <button
+                onClick={() => {
+                  onComplete(focusedMins);
+                  onClose();
+                }}
+                className="btn w-full border border-white/20 text-paper-100 hover:border-white/50 !py-1.5 !text-xs"
+              >
+                <Check className="h-3.5 w-3.5" /> Done now
               </button>
             </>
           )}
