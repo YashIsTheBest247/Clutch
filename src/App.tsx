@@ -27,46 +27,48 @@ import { downloadICS, scheduleToICS } from './lib/calendar';
 import { ArrowUpRight, Bell, Calendar, Chart, Check, Doc, Flame, Gear, Github, Globe, Info, Lifebuoy, Linkedin, Mic, Moon, Play, Speaker, Sparkle, Sun, Trash, X } from './components/icons';
 import { Logo } from './components/Logo';
 
+const TINTS = {
+  mint: { bg: 'bg-mint-100', fg: 'text-mint-700', dim: 'text-mint-700/70' },
+  sky: { bg: 'bg-sky-100', fg: 'text-sky-700', dim: 'text-sky-700/70' },
+  butter: { bg: 'bg-butter-100', fg: 'text-butter-700', dim: 'text-butter-700/70' },
+  lilac: { bg: 'bg-lilac-100', fg: 'text-lilac-700', dim: 'text-lilac-700/70' },
+} as const;
+
 function StatCard({
   label,
   caption,
   value,
-  highlight,
+  tint,
   delay = 0,
   onClick,
 }: {
   label: string;
   caption: string;
   value: number;
-  highlight?: boolean;
+  tint: keyof typeof TINTS;
   delay?: number;
   onClick?: () => void;
 }) {
   const { ref, inView } = useInView<HTMLDivElement>();
   const shown = useCountUp(value, inView);
+  const t = TINTS[tint];
   return (
     <button
       ref={ref as any}
       onClick={onClick}
       style={{ transitionDelay: `${delay}ms` }}
-      className={`reveal lift group flex min-h-[124px] flex-col justify-between rounded-3xl border p-4 text-left sm:min-h-[150px] ${
+      className={`reveal lift group flex min-h-[124px] flex-col justify-between rounded-3xl border border-black/[0.04] p-4 text-left shadow-soft sm:min-h-[150px] ${
         inView ? 'in' : ''
-      } ${
-        highlight
-          ? 'border-transparent bg-ink-900 text-paper-50 shadow-glow'
-          : 'border-ink-900/[0.06] bg-paper-50 text-ink-900 shadow-soft'
-      }`}
+      } ${t.bg}`}
     >
       <div className="flex items-start justify-between">
-        <span className={`label ${highlight ? 'text-paper-50/70' : 'text-ink-500'}`}>{label}</span>
-        <ArrowUpRight
-          className={`h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100 ${
-            highlight ? 'text-paper-50/70' : 'text-ink-400'
-          }`}
-        />
+        <span className={`label ${t.dim}`}>{label}</span>
+        <ArrowUpRight className={`h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100 ${t.dim}`} />
       </div>
-      <p className={`mt-1 text-[11px] ${highlight ? 'text-paper-50/70' : 'text-ink-500'}`}>{caption}</p>
-      <div className="mt-auto font-display text-3xl font-bold tabular-nums tracking-tight sm:text-4xl">{shown}</div>
+      <p className={`mt-1 text-[11px] ${t.dim}`}>{caption}</p>
+      <div className={`mt-auto font-display text-3xl font-bold tabular-nums tracking-tight sm:text-4xl ${t.fg}`}>
+        {shown}
+      </div>
     </button>
   );
 }
@@ -353,17 +355,17 @@ export default function App() {
             <button
               onClick={toggleTheme}
               title={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}
-              className="hidden h-9 w-9 items-center justify-center rounded-full border border-ink-900/15 bg-paper-50 text-ink-900 transition-colors hover:border-ink-900/40 sm:flex"
+              className="hidden h-9 w-9 items-center justify-center rounded-full border border-ink-900/15 bg-paper-50 text-ink-900 transition-all hover:-translate-y-0.5 hover:scale-105 hover:bg-stone-100 hover:border-ink-900/40 active:scale-95 sm:flex"
             >
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
             <button
               onClick={toggleReminders}
               title={remindersOn ? 'Reminders on' : 'Enable browser reminders'}
-              className={`hidden h-9 w-9 items-center justify-center rounded-full border transition-colors sm:flex ${
+              className={`hidden h-9 w-9 items-center justify-center rounded-full border transition-all hover:-translate-y-0.5 hover:scale-105 active:scale-95 sm:flex ${
                 remindersOn
                   ? 'border-transparent bg-ink-900 text-paper-50'
-                  : 'border-ink-900/15 bg-paper-50 text-ink-900 hover:border-ink-900/40'
+                  : 'border-ink-900/15 bg-paper-50 text-ink-900 hover:border-ink-900/40 hover:bg-stone-100'
               }`}
             >
               <Bell className="h-4 w-4" />
@@ -372,10 +374,10 @@ export default function App() {
               <button
                 onClick={toggleVoice}
                 title={voiceOut ? 'Voice replies on' : 'Voice replies off'}
-                className={`hidden h-9 w-9 items-center justify-center rounded-full border transition-colors sm:flex ${
+                className={`hidden h-9 w-9 items-center justify-center rounded-full border transition-all hover:-translate-y-0.5 hover:scale-105 active:scale-95 sm:flex ${
                   voiceOut || tts.speaking
                     ? 'border-transparent bg-ink-900 text-paper-50'
-                    : 'border-ink-900/15 bg-paper-50 text-ink-900 hover:border-ink-900/40'
+                    : 'border-ink-900/15 bg-paper-50 text-ink-900 hover:border-ink-900/40 hover:bg-stone-100'
                 }`}
               >
                 <Speaker className={`h-4 w-4 ${tts.speaking ? 'animate-pulse' : ''}`} />
@@ -385,10 +387,10 @@ export default function App() {
               <button
                 onClick={toggleConverse}
                 title={converseOn ? 'End hands-free conversation' : 'Talk to Clutch (hands-free)'}
-                className={`relative flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${
+                className={`relative flex h-9 w-9 items-center justify-center rounded-full border transition-all hover:-translate-y-0.5 hover:scale-105 active:scale-95 ${
                   converseOn
                     ? 'border-transparent bg-signal-red text-white'
-                    : 'border-ink-900/15 bg-paper-50 text-ink-900 hover:border-ink-900/40'
+                    : 'border-ink-900/15 bg-paper-50 text-ink-900 hover:border-ink-900/40 hover:bg-stone-100'
                 }`}
               >
                 <Mic className="h-4 w-4" />
@@ -443,7 +445,7 @@ export default function App() {
               onAbout={() => setShowAbout(true)}
               onReset={resetAll}
             >
-              <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-ink-900/15 bg-paper-50 py-1 pl-1 pr-2 transition-colors hover:border-ink-900/40">
+              <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-ink-900/15 bg-paper-50 py-1 pl-1 pr-2 transition-all hover:-translate-y-0.5 hover:border-ink-900/40 hover:shadow-soft">
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ink-900 text-[11px] font-bold text-paper-50">
                   {(state.profile.name?.[0] || 'U').toUpperCase()}
                 </span>
@@ -532,10 +534,12 @@ export default function App() {
       {/* Hero: Right now */}
       {top && (
         <Reveal className="mb-4">
-          <section className="card lift overflow-hidden">
-            <div className="flex flex-col gap-4 p-5 sm:p-6 md:flex-row md:items-center">
+          <section className="card lift relative overflow-hidden bg-gradient-to-br from-paper-50 to-mint-100/50">
+            <div className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-sky-200/40 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-16 left-1/3 h-40 w-40 rounded-full bg-butter-200/30 blur-3xl" />
+            <div className="relative flex flex-col gap-4 p-5 sm:p-6 md:flex-row md:items-center">
               <div className="flex-1">
-                <span className="chip mb-3 border border-ink-900/10 bg-stone-100 text-ink-600">Right now</span>
+                <span className="chip mb-3 bg-mint-100 text-mint-700">Right now</span>
                 <p className="text-xs text-ink-600">
                   {greet}, {state.profile.name}. This deserves your attention first.
                 </p>
@@ -587,10 +591,10 @@ export default function App() {
 
       {/* Stats — count up + stagger in on scroll */}
       <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="Open tasks" caption="Awaiting action." value={open.length} highlight delay={0} onClick={() => scrollToId('priorities')} />
-        <StatCard label="Due in 24h" caption="Deadline pressure." value={dueSoon} delay={80} onClick={() => scrollToId('priorities')} />
-        <StatCard label="Focus blocks" caption="Scheduled by Clutch." value={state.schedule.length} delay={160} onClick={() => scrollToId('plan')} />
-        <StatCard label="Drafts ready" caption="Deliverables generated." value={deliverables} delay={240} onClick={() => scrollToId('priorities')} />
+        <StatCard label="Open tasks" caption="Awaiting action." value={open.length} tint="mint" delay={0} onClick={() => scrollToId('priorities')} />
+        <StatCard label="Due in 24h" caption="Deadline pressure." value={dueSoon} tint="butter" delay={80} onClick={() => scrollToId('priorities')} />
+        <StatCard label="Focus blocks" caption="Scheduled by Clutch." value={state.schedule.length} tint="sky" delay={160} onClick={() => scrollToId('plan')} />
+        <StatCard label="Drafts ready" caption="Deliverables generated." value={deliverables} tint="lilac" delay={240} onClick={() => scrollToId('priorities')} />
       </div>
 
       {/* Composer */}
@@ -604,6 +608,9 @@ export default function App() {
         <section id="priorities" className="scroll-mt-24 lg:col-span-4">
           <Reveal>
             <div className="mb-3 flex items-center gap-2 px-1">
+              <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-mint-100 text-mint-600">
+                <Check className="h-4 w-4" />
+              </span>
               <h2 className="font-display text-sm font-semibold text-ink-900">Priorities</h2>
               {open.length > 0 && (
                 <button

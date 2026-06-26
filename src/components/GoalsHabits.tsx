@@ -52,7 +52,9 @@ export function GoalsHabits({
       {/* Goals */}
       <div className="card p-4">
         <div className="mb-3 flex items-center gap-2">
-          <Target className="h-4 w-4 text-ink-700" />
+          <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-mint-100 text-mint-600">
+            <Target className="h-4 w-4" />
+          </span>
           <h2 className="font-display text-sm font-semibold text-ink-900">Goals</h2>
           <span className="chip ml-auto border border-ink-900/10 bg-stone-100 text-ink-600">{goals.length}</span>
         </div>
@@ -86,7 +88,7 @@ export function GoalsHabits({
                     </div>
                   </div>
                   <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-ink-900/10">
-                    <div className="h-full rounded-full bg-ink-900 transition-all" style={{ width: `${pct}%` }} />
+                    <div className="h-full rounded-full bg-mint-500 transition-all" style={{ width: `${pct}%` }} />
                   </div>
                 </li>
               );
@@ -98,7 +100,9 @@ export function GoalsHabits({
       {/* Habits */}
       <div className="card p-4">
         <div className="mb-3 flex items-center gap-2">
-          <Flame className="h-4 w-4 text-ink-700" />
+          <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-lilac-100 text-lilac-600">
+            <Flame className="h-4 w-4" />
+          </span>
           <h2 className="font-display text-sm font-semibold text-ink-900">Habits</h2>
           <span className="chip ml-auto border border-ink-900/10 bg-stone-100 text-ink-600">{habits.length}</span>
         </div>
@@ -123,8 +127,8 @@ export function GoalsHabits({
                     onClick={() => onToggleHabit(h.id)}
                     className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-colors ${
                       doneToday
-                        ? 'border-ink-900 bg-ink-900 text-paper-50'
-                        : 'border-ink-900/25 text-transparent hover:border-ink-900'
+                        ? 'border-mint-500 bg-mint-500 text-white'
+                        : 'border-ink-900/25 text-transparent hover:border-mint-500'
                     }`}
                     title={doneToday ? 'Done today' : 'Mark done today'}
                   >

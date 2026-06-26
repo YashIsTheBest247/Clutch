@@ -4,12 +4,21 @@ import { habitStreak } from '../lib/storage';
 import { generateText, hasApiKey } from '../lib/gemini';
 import { Chart, Flame, Sparkle, X } from './icons';
 
-function KPI({ label, value, sub }: { label: string; value: string; sub?: string }) {
+const KTINT = {
+  mint: { bg: 'bg-mint-100', fg: 'text-mint-700', dim: 'text-mint-700/70' },
+  sky: { bg: 'bg-sky-100', fg: 'text-sky-700', dim: 'text-sky-700/70' },
+  butter: { bg: 'bg-butter-100', fg: 'text-butter-700', dim: 'text-butter-700/70' },
+  lilac: { bg: 'bg-lilac-100', fg: 'text-lilac-700', dim: 'text-lilac-700/70' },
+} as const;
+const BAR_COLORS = ['bg-mint-500', 'bg-sky-500', 'bg-butter-500', 'bg-lilac-500'];
+
+function KPI({ label, value, sub, tint }: { label: string; value: string; sub?: string; tint: keyof typeof KTINT }) {
+  const t = KTINT[tint];
   return (
-    <div className="rounded-2xl border border-ink-900/[0.06] bg-stone-50 p-3">
-      <p className="label text-ink-500">{label}</p>
-      <p className="mt-1 font-display text-2xl font-bold tabular-nums text-ink-900">{value}</p>
-      {sub && <p className="text-[11px] text-ink-500">{sub}</p>}
+    <div className={`rounded-2xl border border-black/[0.04] p-3 ${t.bg}`}>
+      <p className={`label ${t.dim}`}>{label}</p>
+      <p className={`mt-1 font-display text-2xl font-bold tabular-nums ${t.fg}`}>{value}</p>
+      {sub && <p className={`text-[11px] ${t.dim}`}>{sub}</p>}
     </div>
   );
 }
@@ -77,8 +86,10 @@ export function InsightsModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm" onClick={onClose}>
       <div className="card max-h-[88vh] w-full max-w-xl animate-fade-up overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Chart className="h-4 w-4 text-ink-700" />
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-mint-100 text-mint-600">
+              <Chart className="h-4 w-4" />
+            </span>
             <h3 className="font-display text-base font-semibold text-ink-900">Insights</h3>
           </div>
           <div className="flex items-center gap-2">
@@ -94,9 +105,9 @@ export function InsightsModal({
         </div>
 
         <div className="grid grid-cols-3 gap-3">
-          <KPI label="Completion" value={`${m.rate}%`} sub={`${m.done}/${m.total} done`} />
-          <KPI label="Open workload" value={`${m.workloadH}h`} sub={`${m.total - m.done} tasks`} />
-          <KPI label="Day streak" value={`${streak}`} sub={m.overdue ? `${m.overdue} overdue` : 'on track'} />
+          <KPI label="Completion" value={`${m.rate}%`} sub={`${m.done}/${m.total} done`} tint="mint" />
+          <KPI label="Open workload" value={`${m.workloadH}h`} sub={`${m.total - m.done} tasks`} tint="sky" />
+          <KPI label="Day streak" value={`${streak}`} sub={m.overdue ? `${m.overdue} overdue` : 'on track'} tint="butter" />
         </div>
 
         <div className="mt-5">
@@ -105,11 +116,14 @@ export function InsightsModal({
             <p className="text-xs text-ink-500">No open tasks to analyze yet.</p>
           ) : (
             <ul className="space-y-2">
-              {m.catList.map(([c, n]) => (
+              {m.catList.map(([c, n], i) => (
                 <li key={c} className="flex items-center gap-3">
                   <span className="w-28 shrink-0 truncate text-xs text-ink-700">{c}</span>
-                  <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-ink-900/10">
-                    <div className="h-full rounded-full bg-ink-900" style={{ width: `${(n / m.maxCat) * 100}%` }} />
+                  <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-ink-900/[0.06]">
+                    <div
+                      className={`h-full rounded-full ${BAR_COLORS[i % BAR_COLORS.length]}`}
+                      style={{ width: `${(n / m.maxCat) * 100}%` }}
+                    />
                   </div>
                   <span className="w-6 shrink-0 text-right text-[11px] tabular-nums text-ink-500">{n}</span>
                 </li>

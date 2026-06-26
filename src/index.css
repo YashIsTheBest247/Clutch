@@ -5,29 +5,29 @@
 
 :root {
   color-scheme: light;
-  --ink-950: 12 11 10;
-  --ink-900: 22 21 19;
-  --ink-850: 29 27 24;
-  --ink-800: 38 35 32;
-  --ink-700: 58 54 49;
-  --ink-600: 92 86 78;
-  --ink-500: 130 123 113;
+  --ink-950: 14 18 16;
+  --ink-900: 24 30 27;
+  --ink-850: 32 39 35;
+  --ink-800: 42 50 45;
+  --ink-700: 60 70 64;
+  --ink-600: 92 104 97;
+  --ink-500: 128 141 133;
   --paper-50: 255 255 255;
-  --paper-100: 251 250 248;
-  --stone-50: 250 249 247;
-  --stone-100: 244 242 238;
-  --stone-200: 235 232 226;
-  --stone-300: 221 217 209;
-  --stone-400: 205 199 189;
-  --stone-500: 179 172 160;
-  --stone-600: 138 131 119;
-  --stone-700: 97 91 81;
-  --glow-400: 43 40 36;
-  --glow-500: 22 21 19;
-  --glow-600: 12 11 10;
-  --page: 207 201 191;
-  --grid: 22 21 19;
-  --sel: 22 21 19;
+  --paper-100: 250 252 251;
+  --stone-50: 244 249 246;
+  --stone-100: 235 243 239;
+  --stone-200: 224 234 229;
+  --stone-300: 208 221 215;
+  --stone-400: 184 200 192;
+  --stone-500: 146 163 155;
+  --stone-600: 108 123 116;
+  --stone-700: 76 89 83;
+  --glow-400: 42 50 45;
+  --glow-500: 24 30 27;
+  --glow-600: 14 18 16;
+  --page: 230 240 235;
+  --grid: 24 30 27;
+  --sel: 63 157 109;
   --sel-fg: 255 255 255;
 }
 
@@ -79,11 +79,12 @@ body {
   /* Warm world + faint architectural grid; colors flip with the theme. */
   background-color: rgb(var(--page));
   background-image:
-    radial-gradient(900px 520px at 88% -8%, rgba(250, 150, 110, 0.22), transparent 60%),
-    radial-gradient(700px 460px at -8% 6%, rgba(250, 90, 30, 0.06), transparent 55%),
-    linear-gradient(to right, rgb(var(--grid) / 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(var(--grid) / 0.035) 1px, transparent 1px);
-  background-size: auto, auto, 56px 56px, 56px 56px;
+    radial-gradient(820px 520px at 92% -10%, rgba(95, 155, 213, 0.16), transparent 60%),
+    radial-gradient(760px 480px at -8% 4%, rgba(63, 157, 109, 0.16), transparent 58%),
+    radial-gradient(520px 360px at 60% 110%, rgba(213, 154, 54, 0.1), transparent 60%),
+    linear-gradient(to right, rgb(var(--grid) / 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(var(--grid) / 0.03) 1px, transparent 1px);
+  background-size: auto, auto, auto, 56px 56px, 56px 56px;
 }
 
 [data-theme='dark'] body {
@@ -161,6 +162,24 @@ body {
   }
 }
 
+/* Pop — a satisfying check-off animation. */
+@keyframes pop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.animate-pop {
+  animation: pop 0.3s cubic-bezier(0.2, 0.8, 0.3, 1.2);
+}
+
 /* Twinkle — gentle rotate + scale for decorative sparkles. */
 @keyframes twinkle {
   0%,
@@ -236,7 +255,8 @@ body {
   }
   .marquee-track,
   .animate-fade-up,
-  .animate-twinkle {
+  .animate-twinkle,
+  .animate-pop {
     animation: none !important;
   }
 }

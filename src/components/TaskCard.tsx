@@ -1,17 +1,37 @@
 import type { Goal, Task } from '../types';
-import { formatDeadline } from '../lib/scheduler';
-import { ArrowUpRight, Check, Clock, Doc, Layers, Play } from './icons';
+import { formatDeadline, formatDuration } from '../lib/scheduler';
+import { ArrowUpRight, Briefcase, Check, Clock, Doc, Heart, Layers, Play, Wallet } from './icons';
+
+const CAT_TINTS = [
+  { bg: 'bg-mint-100', fg: 'text-mint-600' },
+  { bg: 'bg-sky-100', fg: 'text-sky-600' },
+  { bg: 'bg-butter-100', fg: 'text-butter-600' },
+  { bg: 'bg-lilac-100', fg: 'text-lilac-600' },
+];
+function hashStr(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+}
+function catIcon(text: string) {
+  const t = text.toLowerCase();
+  if (/thes|essay|read|study|cours|assign|exam|lectur|paper|research|write|homework|book/.test(t)) return Doc;
+  if (/bill|pay|financ|tax|rent|invoic|budget|money|bank|subscription/.test(t)) return Wallet;
+  if (/interview|job|meet|call|career|present|client|email|deck|pitch/.test(t)) return Briefcase;
+  if (/gym|doctor|dentist|appoint|health|medic|workout|run|yoga/.test(t)) return Heart;
+  return Layers;
+}
 
 const priorityChip: Record<string, string> = {
-  critical: 'bg-ink-900 text-paper-50',
-  high: 'bg-stone-200 text-ink-800',
-  medium: 'bg-stone-100 text-ink-600',
+  critical: 'bg-signal-red/15 text-signal-red',
+  high: 'bg-butter-100 text-butter-700',
+  medium: 'bg-sky-100 text-sky-700',
   low: 'bg-stone-100 text-ink-500',
 };
 const toneClass: Record<string, string> = {
   red: 'text-signal-red',
   amber: 'text-signal-amber',
-  green: 'text-ink-500',
+  green: 'text-mint-600',
   muted: 'text-ink-400',
 };
 
@@ -40,24 +60,28 @@ export function TaskCard({
   const done = task.status === 'done';
   const subDone = task.subtasks.filter((s) => s.done).length;
   const pct = task.subtasks.length ? Math.round((subDone / task.subtasks.length) * 100) : done ? 100 : 0;
-  const critical = task.priority === 'critical' && !done;
+  const catKey = task.category || task.title;
+  const tint = CAT_TINTS[hashStr(catKey) % CAT_TINTS.length];
+  const CatIcon = catIcon(catKey);
 
   return (
-    <div
-      className={`card lift group p-4 ${done ? 'opacity-60' : ''} ${
-        critical ? 'ring-1 ring-ink-900/15' : ''
-      }`}
-    >
+    <div className={`card lift group p-4 ${done ? 'opacity-60' : ''}`}>
       <div className="flex items-start gap-3">
         <button
           onClick={() => onStatus(done ? 'todo' : 'done')}
           className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors ${
-            done ? 'border-ink-900 bg-ink-900 text-paper-50' : 'border-ink-900/25 hover:border-ink-900'
+            done ? 'border-mint-500 bg-mint-500 text-white' : 'border-ink-900/25 hover:border-mint-500'
           }`}
           aria-label="Toggle done"
         >
-          {done && <Check className="h-3 w-3" />}
+          {done && <Check className="h-3 w-3 animate-pop" />}
         </button>
+
+        <span
+          className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105 ${tint.bg} ${tint.fg}`}
+        >
+          <CatIcon className="h-4 w-4" />
+        </span>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
@@ -76,7 +100,7 @@ export function TaskCard({
               <Clock className="h-3.5 w-3.5" /> {dl.label}
             </span>
             <span className="inline-flex items-center gap-1">
-              <Layers className="h-3.5 w-3.5" /> {task.estimateMins}m
+              <Layers className="h-3.5 w-3.5" /> {formatDuration(task.estimateMins)}
             </span>
             {task.category && (
               <span className="rounded-full bg-stone-100 px-2 py-0.5 font-medium">{task.category}</span>
@@ -89,7 +113,7 @@ export function TaskCard({
           {task.subtasks.length > 0 && (
             <div className="mt-3">
               <div className="mb-1.5 h-1 w-full overflow-hidden rounded-full bg-stone-200">
-                <div className="h-full rounded-full bg-ink-900 transition-all" style={{ width: `${pct}%` }} />
+                <div className="h-full rounded-full bg-mint-500 transition-all" style={{ width: `${pct}%` }} />
               </div>
               <ul className="space-y-1">
                 {task.subtasks.map((s) => (
@@ -100,13 +124,13 @@ export function TaskCard({
                     >
                       <span
                         className={`flex h-4 w-4 items-center justify-center rounded-full border ${
-                          s.done ? 'border-ink-900 bg-ink-900 text-paper-50' : 'border-ink-900/25'
+                          s.done ? 'border-mint-500 bg-mint-500 text-white' : 'border-ink-900/25'
                         }`}
                       >
-                        {s.done && <Check className="h-3 w-3" />}
+                        {s.done && <Check className="h-3 w-3 animate-pop" />}
                       </span>
                       <span className={s.done ? 'text-ink-400 line-through' : 'text-ink-700'}>{s.title}</span>
-                      <span className="ml-auto text-[10px] text-ink-400">{s.estimateMins}m</span>
+                      <span className="ml-auto text-[10px] text-ink-400">{formatDuration(s.estimateMins)}</span>
                     </button>
                   </li>
                 ))}

@@ -190,6 +190,16 @@ export function slippage(tasks: Task[], now: Date): { overdue: Task[]; atRisk: T
   return { overdue, atRisk };
 }
 
+/** Human-friendly minutes → "20h", "3h 30m", "45m". */
+export function formatDuration(mins: number): string {
+  if (!mins || mins < 1) return '0m';
+  const h = Math.floor(mins / 60);
+  const m = Math.round(mins % 60);
+  if (h && m) return `${h}h ${m}m`;
+  if (h) return `${h}h`;
+  return `${m}m`;
+}
+
 export function formatDeadline(iso?: string): { label: string; tone: 'red' | 'amber' | 'green' | 'muted' } {
   if (!iso) return { label: 'No deadline', tone: 'muted' };
   const d = new Date(iso);

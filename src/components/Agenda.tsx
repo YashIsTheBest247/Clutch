@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Commitment, ScheduleBlock, Task } from '../types';
 import { downloadICS, googleCalendarUrl, scheduleToICS } from '../lib/calendar';
-import { ArrowUpRight, Calendar, Download, Plus, X } from './icons';
+import { Calendar, Download, Plus, X } from './icons';
 
 type Item =
   | { kind: 'focus'; id: string; title: string; start: string; end: string; reason: string }
@@ -58,7 +58,9 @@ export function Agenda({
   return (
     <div className="panel flex h-full flex-col p-4">
       <div className="mb-3 flex items-center gap-2">
-        <Calendar className="h-4 w-4 text-ink-700" />
+        <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
+          <Calendar className="h-4 w-4" />
+        </span>
         <h2 className="font-display text-sm font-semibold text-ink-900">Your plan</h2>
         <div className="ml-auto flex items-center gap-1.5">
           {onAddCommitment && (
@@ -125,7 +127,7 @@ export function Agenda({
                       }`}
                     />
                     <div
-                      className={`rounded-2xl px-3 py-2 ${
+                      className={`rounded-2xl px-3 py-2 transition-transform duration-200 group-hover:-translate-y-[2px] ${
                         it.kind === 'fixed'
                           ? 'border border-dashed border-signal-red/40 bg-signal-red/[0.05]'
                           : 'border border-ink-900/[0.06] bg-paper-50 shadow-soft'
@@ -153,9 +155,9 @@ export function Agenda({
                             target="_blank"
                             rel="noreferrer"
                             title="Add to Google Calendar"
-                            className="shrink-0 text-ink-400 opacity-0 transition-opacity hover:text-ink-900 group-hover:opacity-100"
+                            className="flex shrink-0 items-center gap-1 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-700 opacity-0 transition-opacity group-hover:opacity-100"
                           >
-                            <ArrowUpRight className="h-3.5 w-3.5" />
+                            <Calendar className="h-3 w-3" /> Add
                           </a>
                           {it.kind === 'fixed' && onDeleteCommitment && (
                             <button

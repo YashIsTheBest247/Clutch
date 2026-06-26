@@ -47,11 +47,16 @@ export default {
         },
         // Whisper-quiet earthy signal tones (urgency cues that still feel calm).
         signal: {
-          red: '#b05c43',
-          amber: '#94794a',
-          green: '#6e7a64',
-          blue: '#6e7a64',
+          red: '#e2674e',
+          amber: '#d59a36',
+          green: '#3f9d6d',
+          blue: '#5b9bd5',
         },
+        // Soft pastel accents (health-app palette) — used for tinted cards & tiles.
+        mint: { 100: '#dbeee4', 200: '#c4e3d2', 500: '#3f9d6d', 600: '#2f8f5f', 700: '#1f6f49' },
+        sky: { 100: '#dde9fb', 200: '#c7dbf6', 500: '#5b9bd5', 600: '#3f7fc4', 700: '#2c5f97' },
+        butter: { 100: '#fbeec6', 200: '#f6e0a4', 500: '#d59a36', 600: '#bf8f2e', 700: '#8f6a1f' },
+        lilac: { 100: '#e7defb', 200: '#d6c8f4', 500: '#8b6fc7', 600: '#6f55b8', 700: '#523f8c' },
       },
       boxShadow: {
         // Soft, premium card shadows.

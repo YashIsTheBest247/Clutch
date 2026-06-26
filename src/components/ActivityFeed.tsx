@@ -49,7 +49,9 @@ export function ActivityFeed({
   return (
     <div className="panel flex h-full min-h-0 flex-col p-4">
       <div className="mb-3 flex items-center gap-2">
-        <Sparkle className="h-4 w-4 animate-spin text-ink-700 [animation-duration:3.5s]" />
+        <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-lilac-100 text-lilac-600">
+          <Sparkle className="h-4 w-4 animate-spin [animation-duration:3.5s]" />
+        </span>
         <h2 className="font-display text-sm font-semibold text-ink-900">Agent activity</h2>
         <span className="label ml-auto text-ink-500">Live</span>
       </div>
