@@ -15,7 +15,7 @@ import { Reveal } from './components/Reveal';
 import { FocusTimer } from './components/FocusTimer';
 import { ProfileMenu } from './components/ProfileMenu';
 import { AboutModal } from './components/AboutModal';
-import { ArrowUpRight, Calendar, Check, Doc, Flame, Gear, Play, Speaker, Sparkle } from './components/icons';
+import { ArrowUpRight, Calendar, Check, Doc, Flame, Gear, Lifebuoy, Play, Speaker, Sparkle, X } from './components/icons';
 import { Logo } from './components/Logo';
 
 function StatCard({
@@ -70,7 +70,13 @@ export default function App() {
   const [showAbout, setShowAbout] = useState(false);
   const [focusTask, setFocusTask] = useState<Task | null>(null);
   const [planning, setPlanning] = useState(false);
+  const [rescuing, setRescuing] = useState(false);
+  const [nudgeDismissed, setNudgeDismissed] = useState(false);
   const streak = state.streak?.count ?? 0;
+
+  // Proactive: detect slipping work on load (deterministic, no API spend).
+  const slip = useMemo(() => slippage(state.tasks, new Date()), [state.tasks]);
+  const slipping = slip.overdue.length + slip.atRisk.length;
 
   // Voice-out: speak the agent's daily briefing (and optionally every reply).
   const tts = useTTS();
@@ -126,6 +132,19 @@ export default function App() {
       setPlanning(false);
       // Let the new message render, then reveal the live agent chat.
       setTimeout(() => scrollToId('agent'), 120);
+    }
+  };
+
+  const rescueMe = async () => {
+    if (thinking || open.length === 0) return;
+    setRescuing(true);
+    setTimeout(() => scrollToId('agent'), 80);
+    try {
+      await store.sendToAgent(
+        "RESCUE MODE — I'm overwhelmed and short on time. Stay calm and directive. Ruthlessly re-prioritize every task, rebuild my schedule, and then tell me EXACTLY the 3 things to do in the next 60 minutes — a numbered list, nothing else. Cut everything that isn't essential right now.",
+      );
+    } finally {
+      setRescuing(false);
     }
   };
 
@@ -192,10 +211,19 @@ export default function App() {
               </button>
             )}
             <button
+              onClick={rescueMe}
+              disabled={thinking || open.length === 0}
+              title="I'm overwhelmed — triage everything now"
+              className="btn !px-3 !text-xs border border-signal-red/40 bg-signal-red/10 text-signal-red hover:bg-signal-red/15"
+            >
+              <Lifebuoy className={`h-3.5 w-3.5 ${rescuing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">{rescuing ? 'Rescuing…' : 'Rescue me'}</span>
+            </button>
+            <button
               onClick={requestBriefing}
               disabled={thinking || open.length === 0}
               title="Spoken daily briefing"
-              className="btn-ghost !px-3 !text-xs"
+              className="hidden btn-ghost !px-3 !text-xs sm:inline-flex"
             >
               <Play className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Briefing</span>
@@ -245,6 +273,32 @@ export default function App() {
               Set <code className="rounded bg-ink-900/[0.06] px-1">GEMINI_API_KEY</code> in your environment (or AI
               Studio secret) and rebuild — the agent needs it to think.
             </span>
+          </div>
+        </Reveal>
+      )}
+
+      {/* Proactive nudge — appears automatically when work is slipping */}
+      {slipping > 0 && !nudgeDismissed && !thinking && (
+        <Reveal className="mb-4">
+          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-signal-red/30 bg-signal-red/[0.07] px-4 py-3">
+            <Lifebuoy className="h-4 w-4 shrink-0 text-signal-red" />
+            <p className="text-xs text-ink-800">
+              Heads up — <span className="font-semibold text-signal-red">{slipping}</span>{' '}
+              {slipping === 1 ? 'task is' : 'tasks are'} slipping
+              {slip.overdue.length ? ` (${slip.overdue.length} overdue)` : ''}. Want me to step in?
+            </p>
+            <div className="ml-auto flex items-center gap-2">
+              <button onClick={rescueMe} disabled={thinking} className="btn !py-1.5 !text-xs bg-signal-red text-white hover:opacity-90">
+                <Lifebuoy className="h-3.5 w-3.5" /> Re-plan now
+              </button>
+              <button
+                onClick={() => setNudgeDismissed(true)}
+                className="rounded-full p-1.5 text-ink-500 hover:bg-ink-900/5 hover:text-ink-900"
+                aria-label="Dismiss"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
         </Reveal>
       )}
@@ -372,7 +426,12 @@ export default function App() {
         <section id="agent" className="scroll-mt-24 lg:col-span-4 lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)]">
           <Reveal className="h-full">
             <div className="h-[420px] sm:h-[520px] lg:h-full">
-              <ActivityFeed messages={state.messages} thinking={thinking} liveActions={liveActions} />
+              <ActivityFeed
+              messages={state.messages}
+              thinking={thinking}
+              liveActions={liveActions}
+              streamingText={store.streamingText}
+            />
             </div>
           </Reveal>
         </section>

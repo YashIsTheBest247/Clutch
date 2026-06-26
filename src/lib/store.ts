@@ -9,6 +9,7 @@ export interface Store {
   state: AppState;
   thinking: boolean;
   liveActions: AgentAction[];
+  streamingText: string;
   sendToAgent: (text: string, image?: AgentImage) => Promise<void>;
   setProfile: (p: Partial<UserProfile>) => void;
   toggleSubtask: (taskId: string, subId: string) => void;
@@ -21,6 +22,7 @@ export function useStore(): Store {
   const [state, setState] = useState<AppState>(() => loadState());
   const [thinking, setThinking] = useState(false);
   const [liveActions, setLiveActions] = useState<AgentAction[]>([]);
+  const [streamingText, setStreamingText] = useState('');
   const stateRef = useRef(state);
   stateRef.current = state;
 
@@ -41,12 +43,14 @@ export function useStore(): Store {
       pushMessage({ role: 'user', content: image ? `${text || ''} 📎 image attached`.trim() : text });
       setThinking(true);
       setLiveActions([]);
+      setStreamingText('');
       try {
         const result = await runAgent(
           stateRef.current,
           text,
           (a) => setLiveActions((prev) => [...prev, a]),
           image,
+          (t) => setStreamingText(t),
         );
         setState((s) => ({
           ...result.state,
@@ -74,6 +78,7 @@ export function useStore(): Store {
       } finally {
         setThinking(false);
         setLiveActions([]);
+        setStreamingText('');
       }
     },
     [pushMessage, thinking],
@@ -156,6 +161,7 @@ export function useStore(): Store {
     state,
     thinking,
     liveActions,
+    streamingText,
     sendToAgent,
     setProfile,
     toggleSubtask,

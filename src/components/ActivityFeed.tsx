@@ -31,17 +31,19 @@ export function ActivityFeed({
   messages,
   thinking,
   liveActions,
+  streamingText = '',
 }: {
   messages: AgentMessage[];
   thinking: boolean;
   liveActions: AgentAction[];
+  streamingText?: string;
 }) {
   const listRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     // Scroll only the feed's own container — never the page/window.
     const el = listRef.current;
     if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-  }, [messages.length, thinking, liveActions.length]);
+  }, [messages.length, thinking, liveActions.length, streamingText]);
 
   return (
     <div className="panel flex h-full min-h-0 flex-col p-4">
@@ -100,10 +102,17 @@ export function ActivityFeed({
             {liveActions.map((a, i) => (
               <ActionRow key={i} a={a} />
             ))}
-            <div className="flex items-center gap-2 rounded-2xl border border-ink-900/[0.06] bg-paper-50 px-3 py-2 text-xs text-ink-500 shadow-soft">
-              <Sparkle className="h-3.5 w-3.5 animate-spin text-ink-700" />
-              {liveActions.length ? 'Working through your plan…' : 'Thinking…'}
-            </div>
+            {streamingText ? (
+              <div className="max-w-[95%] rounded-2xl rounded-bl-md border border-ink-900/[0.06] bg-paper-50 px-3 py-2 text-xs text-ink-800 shadow-soft">
+                <Markdown text={streamingText} />
+                <span className="ml-0.5 inline-block h-3 w-[2px] translate-y-0.5 animate-pulse bg-ink-900 align-middle" />
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 rounded-2xl border border-ink-900/[0.06] bg-paper-50 px-3 py-2 text-xs text-ink-500 shadow-soft">
+                <Sparkle className="h-3.5 w-3.5 animate-spin text-ink-700" />
+                {liveActions.length ? 'Working through your plan…' : 'Thinking…'}
+              </div>
+            )}
           </div>
         )}
       </div>

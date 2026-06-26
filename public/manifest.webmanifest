@@ -1,0 +1,19 @@
+{
+  "name": "Clutch — AI Chief of Staff",
+  "short_name": "Clutch",
+  "description": "An autonomous AI productivity companion that plans, prioritizes, schedules, and does the work so you never miss a deadline.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#cfc9bf",
+  "theme_color": "#161513",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

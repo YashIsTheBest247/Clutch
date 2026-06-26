@@ -306,6 +306,7 @@ export async function runAgent(
   userText: string,
   onStep?: (action: AgentAction) => void,
   image?: AgentImage,
+  onToken?: (currentTurnText: string) => void,
 ): Promise<AgentRunResult> {
   const ai = getClient();
   const now = new Date();
@@ -333,7 +334,7 @@ export async function runAgent(
   let reply = '';
 
   for (let turn = 0; turn < 8; turn++) {
-    const res = await ai.models.generateContent({
+    const stream = await ai.models.generateContentStream({
       model: MODEL,
       contents,
       config: {
@@ -343,12 +344,29 @@ export async function runAgent(
       },
     });
 
-    const calls = res.functionCalls ?? [];
+    let turnText = '';
+    const calls: any[] = [];
+    for await (const chunk of stream) {
+      let delta = '';
+      try {
+        delta = chunk.text ?? '';
+      } catch {
+        delta = '';
+      }
+      if (delta) {
+        turnText += delta;
+        onToken?.(turnText); // stream the reply live to the UI
+      }
+      const fcs = chunk.functionCalls;
+      if (fcs && fcs.length) calls.push(...fcs);
+    }
+
     if (!calls.length) {
-      reply = res.text ?? '';
+      reply = turnText;
       break;
     }
 
+    onToken?.(''); // clear the live bubble while tools run
     // Record the model's tool-call turn.
     contents.push({
       role: 'model',
