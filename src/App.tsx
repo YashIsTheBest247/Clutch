@@ -394,6 +394,41 @@ export default function App() {
   );
   const top = open.length ? [...open].sort((a, b) => (b.urgencyScore ?? 0) - (a.urgencyScore ?? 0))[0] : null;
 
+  // Quick filters for the task board.
+  const [taskFilter, setTaskFilter] = useState<'all' | 'today' | 'week' | 'overdue'>('all');
+  const matchesFilter = (t: Task, key: typeof taskFilter, now: number, eod: number, weekEnd: number) => {
+    if (key === 'all') return true;
+    if (t.status === 'done' || !t.deadline) return false;
+    const d = Date.parse(t.deadline);
+    if (key === 'overdue') return d < now;
+    if (key === 'today') return d <= eod;
+    return d <= weekEnd; // this week
+  };
+  const filterCounts = useMemo(() => {
+    const now = Date.now();
+    const e = new Date();
+    e.setHours(23, 59, 59, 999);
+    const eod = e.getTime();
+    const weekEnd = now + 7 * 24 * 3600 * 1000;
+    const c = { all: state.tasks.length, today: 0, week: 0, overdue: 0 };
+    for (const t of state.tasks) {
+      if (matchesFilter(t, 'today', now, eod, weekEnd)) c.today++;
+      if (matchesFilter(t, 'week', now, eod, weekEnd)) c.week++;
+      if (matchesFilter(t, 'overdue', now, eod, weekEnd)) c.overdue++;
+    }
+    return c;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.tasks]);
+  const filteredTasks = useMemo(() => {
+    const now = Date.now();
+    const e = new Date();
+    e.setHours(23, 59, 59, 999);
+    const eod = e.getTime();
+    const weekEnd = now + 7 * 24 * 3600 * 1000;
+    return sorted.filter((t) => matchesFilter(t, taskFilter, now, eod, weekEnd));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sorted, taskFilter]);
+
   const dueSoon = open.filter((t) => t.deadline && Date.parse(t.deadline) - Date.now() < 24 * 3600 * 1000).length;
   const deliverables = state.tasks.filter((t) => t.deliverable).length;
   const done = state.tasks.filter((t) => t.status === 'done').length;
@@ -769,6 +804,33 @@ export default function App() {
               </span>
             </div>
           </Reveal>
+          {state.tasks.length > 0 && (
+            <Reveal>
+              <div className="mb-3 flex flex-wrap items-center gap-1.5 px-1">
+                {([
+                  { key: 'all', label: 'All', n: filterCounts.all },
+                  { key: 'today', label: 'Today', n: filterCounts.today },
+                  { key: 'week', label: 'This week', n: filterCounts.week },
+                  { key: 'overdue', label: 'Overdue', n: filterCounts.overdue },
+                ] as const).map((f) => (
+                  <button
+                    key={f.key}
+                    onClick={() => setTaskFilter(f.key)}
+                    className={`chip transition-colors ${
+                      taskFilter === f.key
+                        ? f.key === 'overdue'
+                          ? 'bg-signal-red text-white'
+                          : 'bg-ink-900 text-paper-50'
+                        : 'border border-ink-900/10 bg-paper-50 text-ink-600 hover:bg-stone-100'
+                    }`}
+                  >
+                    {f.label}
+                    <span className={taskFilter === f.key ? 'opacity-70' : 'text-ink-400'}>{f.n}</span>
+                  </button>
+                ))}
+              </div>
+            </Reveal>
+          )}
           {state.tasks.length === 0 ? (
             <Reveal>
               <div className="card flex flex-col items-center justify-center p-8 text-center sm:p-10">
@@ -782,9 +844,18 @@ export default function App() {
                 </p>
               </div>
             </Reveal>
+          ) : filteredTasks.length === 0 ? (
+            <Reveal>
+              <div className="card flex flex-col items-center justify-center p-8 text-center text-ink-600">
+                <p className="text-sm">No tasks match “{taskFilter === 'week' ? 'This week' : taskFilter}”.</p>
+                <button onClick={() => setTaskFilter('all')} className="btn-ghost mt-3 !text-xs">
+                  Show all tasks
+                </button>
+              </div>
+            </Reveal>
           ) : (
             <div className="space-y-3">
-              {sorted.map((t, i) => (
+              {filteredTasks.map((t, i) => (
                 <Reveal key={t.id} delay={Math.min(i * 50, 300)}>
                   <TaskCard
                     task={t}
