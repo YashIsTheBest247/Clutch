@@ -390,9 +390,8 @@ export default function App() {
             )}
           </div>
           <nav className="hidden items-center gap-7 text-sm text-ink-600 lg:flex">
-            <button onClick={() => scrollToId('priorities')} className="transition-colors hover:text-ink-900">Priorities</button>
-            <button onClick={() => scrollToId('plan')} className="transition-colors hover:text-ink-900">Plan</button>
-            <button onClick={() => scrollToId('agent')} className="transition-colors hover:text-ink-900">Agent</button>
+            <button onClick={() => scrollToId('priorities')} className="transition-colors hover:text-ink-900">Workspace</button>
+            <button onClick={() => scrollToId('goals')} className="transition-colors hover:text-ink-900">Goals</button>
             <button onClick={() => scrollToId('how')} className="transition-colors hover:text-ink-900">How it works</button>
             <button
               onClick={() => setPaletteOpen(true)}
@@ -494,6 +493,7 @@ export default function App() {
               <MItem icon={<ArrowUpRight className="h-4 w-4" />} label="Priorities" onClick={() => { scrollToId('priorities'); setMobileOpen(false); }} />
               <MItem icon={<ArrowUpRight className="h-4 w-4" />} label="Plan" onClick={() => { scrollToId('plan'); setMobileOpen(false); }} />
               <MItem icon={<ArrowUpRight className="h-4 w-4" />} label="Agent" onClick={() => { scrollToId('agent'); setMobileOpen(false); }} />
+              <MItem icon={<ArrowUpRight className="h-4 w-4" />} label="Goals & habits" onClick={() => { scrollToId('goals'); setMobileOpen(false); }} />
               <MItem icon={<ArrowUpRight className="h-4 w-4" />} label="How it works" onClick={() => { scrollToId('how'); setMobileOpen(false); }} />
 
               <div className="my-1 h-px bg-ink-900/[0.06]" />
