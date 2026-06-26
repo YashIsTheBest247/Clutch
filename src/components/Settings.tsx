@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { UserProfile } from '../types';
 import { ClockPicker } from './ClockPicker';
-import { Clock, X } from './icons';
+import { Clock, Download, X } from './icons';
 
 /** 24h integer → "9:00 AM" style label. */
 function hourLabel(h: number): string {
@@ -30,13 +30,18 @@ export function Settings({
   onSave,
   onClose,
   onClear,
+  onExport,
+  onImport,
 }: {
   profile: UserProfile;
   onSave: (p: Partial<UserProfile>) => void;
   onClose: () => void;
   onClear: () => void;
+  onExport?: () => void;
+  onImport?: (file: File) => void;
 }) {
   const [p, setP] = useState(profile);
+  const fileRef = useRef<HTMLInputElement>(null);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm" onClick={onClose}>
       <div className="card w-full max-w-md animate-fade-up p-5" onClick={(e) => e.stopPropagation()}>
@@ -80,6 +85,36 @@ export function Settings({
             />
           </label>
         </div>
+
+        {(onExport || onImport) && (
+          <div className="mt-4 flex items-center gap-2 border-t border-black/10 pt-4">
+            <span className="label mr-auto text-ink-600">Your data</span>
+            {onExport && (
+              <button onClick={onExport} className="btn-ghost !px-3 !py-1.5 !text-xs" title="Download a JSON backup">
+                <Download className="h-3.5 w-3.5" /> Export
+              </button>
+            )}
+            {onImport && (
+              <>
+                <button onClick={() => fileRef.current?.click()} className="btn-ghost !px-3 !py-1.5 !text-xs" title="Restore from a JSON backup">
+                  <Download className="h-3.5 w-3.5 rotate-180" /> Import
+                </button>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="application/json,.json"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) onImport(f);
+                    e.target.value = '';
+                  }}
+                />
+              </>
+            )}
+          </div>
+        )}
+
         <div className="mt-5 flex items-center justify-between border-t border-black/10 pt-4">
           <button
             onClick={() => {

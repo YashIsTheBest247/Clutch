@@ -30,7 +30,7 @@ import { HowItWorks } from './components/HowItWorks';
 import { CommandPalette, type Command } from './components/CommandPalette';
 import { Toaster } from './components/Toaster';
 import { downloadICS, scheduleToICS } from './lib/calendar';
-import { ArrowUpRight, Bell, Calendar, Chart, Check, Doc, Flame, Gear, Github, Globe, Info, Lifebuoy, Linkedin, Menu, Mic, Moon, Play, Speaker, Sparkle, Sun, Trash, X } from './components/icons';
+import { ArrowUpRight, Bell, Calendar, Chart, Check, Doc, Download, Flame, Gear, Github, Globe, Info, Lifebuoy, Linkedin, Menu, Mic, Moon, Play, Speaker, Sparkle, Sun, Trash, X } from './components/icons';
 import { Logo } from './components/Logo';
 
 const TINTS = {
@@ -161,6 +161,45 @@ export default function App() {
       toasts.push('Task completed 🎉', { actionLabel: 'Undo', onAction: () => store.setTaskStatus(t.id, 'todo') });
     }
   };
+  const exportData = () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `clutch-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toasts.push('Backup downloaded');
+  };
+
+  const importData = (file: File) => {
+    const before = {
+      profile: state.profile,
+      tasks: state.tasks,
+      schedule: state.schedule,
+      messages: state.messages,
+      goals: state.goals,
+      habits: state.habits,
+      commitments: state.commitments,
+      streak: state.streak,
+      calibration: state.calibration,
+    };
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(String(reader.result));
+        if (!data || typeof data !== 'object' || !Array.isArray(data.tasks)) throw new Error('invalid');
+        store.restoreAll(data);
+        toasts.push('Backup restored', { actionLabel: 'Undo', onAction: () => store.restoreAll(before) });
+      } catch {
+        toasts.push("Couldn't read that file — is it a Clutch backup?");
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const resetAll = () => {
     const snap = {
       tasks: state.tasks,
@@ -370,6 +409,22 @@ export default function App() {
     { id: 'brief', label: 'Spoken daily briefing', icon: <Play className="h-4 w-4" />, run: requestBriefing, disabled: open.length === 0 },
     { id: 'why', label: 'Why this plan? — explain the ordering', icon: <Info className="h-4 w-4" />, run: explainPlan, disabled: open.length === 0 },
     { id: 'cal', label: 'Export plan to calendar (.ics)', icon: <Calendar className="h-4 w-4" />, run: exportCalendar },
+    { id: 'export', label: 'Export backup (download JSON)', icon: <Download className="h-4 w-4" />, run: exportData },
+    {
+      id: 'import',
+      label: 'Import backup (restore JSON)',
+      icon: <Download className="h-4 w-4 rotate-180" />,
+      run: () => {
+        const inp = document.createElement('input');
+        inp.type = 'file';
+        inp.accept = 'application/json,.json';
+        inp.onchange = () => {
+          const f = inp.files?.[0];
+          if (f) importData(f);
+        };
+        inp.click();
+      },
+    },
     { id: 'insights', label: 'Open insights', icon: <Chart className="h-4 w-4" />, run: () => setShowInsights(true) },
     { id: 'retro', label: 'Weekly retrospective', icon: <Chart className="h-4 w-4" />, run: weeklyRetro },
     { id: 'theme', label: 'Toggle dark / light theme', icon: theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />, run: toggleTheme },
@@ -913,6 +968,8 @@ export default function App() {
           onSave={store.setProfile}
           onClose={() => setShowSettings(false)}
           onClear={resetAll}
+          onExport={exportData}
+          onImport={importData}
         />
       )}
     </div>

@@ -59,6 +59,7 @@ You dump your commitments however you like — **type** them, **paste** an email
 - Schedules **around** your real fixed commitments
 
 ###  Product experience
+- **Guided onboarding tour** — a premium first-visit walkthrough (spotlight + animated arrow/tooltip) of Account, Quick Notes, Quick Controls, Rescue Mode, and the Command palette, with **Skip / Back / Next** and **Replay tutorial** (from the profile menu or ⌘K)
 - **Google Sign-In** (identity) — personalizes greeting + avatar for any user
 - **Insights dashboard** — completion rate, workload, streaks, by-category chart, and a **Gemini-written** "how you work" summary
 - **Floating Quick Notes** — an always-on scratchpad that auto-saves; **draggable** on desktop, a clean **bottom-sheet** on mobile, and can **turn notes into tasks** in one tap
@@ -68,6 +69,7 @@ You dump your commitments however you like — **type** them, **paste** an email
 - **Fully responsive** — collapses to a sticky mobile navbar + hamburger menu with smooth animations
 - **Custom themed inputs** — analog **clock time picker**, themed dropdowns (no jarring native popups)
 - **Installable PWA** — works offline
+- **Backup & restore** — export all your data as JSON and re-import it (with undo) from Settings or ⌘K
 - **Toasts + Undo** for delete / complete / reset, plus confetti on completion
 
 ---
