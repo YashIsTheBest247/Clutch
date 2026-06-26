@@ -1,6 +1,29 @@
 import { useState } from 'react';
 import type { UserProfile } from '../types';
-import { X } from './icons';
+import { ClockPicker } from './ClockPicker';
+import { Clock, X } from './icons';
+
+/** 24h integer → "9:00 AM" style label. */
+function hourLabel(h: number): string {
+  const period = h < 12 ? 'AM' : 'PM';
+  const hr = h % 12 === 0 ? 12 : h % 12;
+  return `${hr}:00 ${period}`;
+}
+
+function TimeField({ value, onChange }: { value: number; onChange: (h: number) => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} className="input flex w-full items-center gap-2 text-left">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-mint-100 text-mint-600">
+          <Clock className="h-3.5 w-3.5" />
+        </span>
+        <span className="flex-1 text-ink-900">{hourLabel(value)}</span>
+      </button>
+      {open && <ClockPicker value={value} onChange={onChange} onClose={() => setOpen(false)} />}
+    </>
+  );
+}
 
 export function Settings({
   profile,
@@ -40,25 +63,11 @@ export function Settings({
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
               <span className="label mb-1 block text-ink-600">Day starts</span>
-              <input
-                type="number"
-                min={0}
-                max={23}
-                className="input"
-                value={p.dayStartHour}
-                onChange={(e) => setP({ ...p, dayStartHour: Number(e.target.value) })}
-              />
+              <TimeField value={p.dayStartHour} onChange={(h) => setP({ ...p, dayStartHour: h })} />
             </label>
             <label className="block">
               <span className="label mb-1 block text-ink-600">Day ends</span>
-              <input
-                type="number"
-                min={1}
-                max={24}
-                className="input"
-                value={p.dayEndHour}
-                onChange={(e) => setP({ ...p, dayEndHour: Number(e.target.value) })}
-              />
+              <TimeField value={p.dayEndHour} onChange={(h) => setP({ ...p, dayEndHour: h })} />
             </label>
           </div>
           <label className="block">

@@ -85,6 +85,41 @@
   --lilac-700: 190 175 228;
 }
 
+/* Force the light palette within a subtree (e.g. the phone mockup screen) so it
+   always looks like a lit device, even in dark mode. */
+.force-light {
+  color-scheme: light;
+  --ink-950: 14 18 16;
+  --ink-900: 24 30 27;
+  --ink-850: 32 39 35;
+  --ink-800: 42 50 45;
+  --ink-700: 60 70 64;
+  --ink-600: 92 104 97;
+  --ink-500: 128 141 133;
+  --paper-50: 255 255 255;
+  --paper-100: 250 252 251;
+  --stone-50: 244 249 246;
+  --stone-100: 235 243 239;
+  --stone-200: 224 234 229;
+  --stone-300: 208 221 215;
+  --stone-400: 184 200 192;
+  --stone-500: 146 163 155;
+  --stone-600: 108 123 116;
+  --stone-700: 76 89 83;
+  --mint-100: 219 238 228;
+  --mint-600: 47 143 95;
+  --mint-700: 31 111 73;
+  --sky-100: 221 233 251;
+  --sky-600: 63 127 196;
+  --sky-700: 44 95 151;
+  --butter-100: 251 238 198;
+  --butter-600: 191 143 46;
+  --butter-700: 143 106 31;
+  --lilac-100: 231 222 251;
+  --lilac-600: 111 85 184;
+  --lilac-700: 82 63 140;
+}
+
 html {
   scroll-behavior: smooth;
 }

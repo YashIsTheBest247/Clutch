@@ -1,5 +1,6 @@
 import type { Goal, Task } from '../types';
 import { formatDeadline, formatDuration } from '../lib/scheduler';
+import { ThemedSelect } from './ThemedSelect';
 import { ArrowUpRight, Briefcase, Check, Clock, Doc, Heart, Layers, Play, Wallet } from './icons';
 
 const CAT_TINTS = [
@@ -140,32 +141,25 @@ export function TaskCard({
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {!done && goals && goals.length > 0 && onAssignGoal && (
-              <select
-                value={task.goalId ?? ''}
-                onChange={(e) => onAssignGoal(e.target.value || undefined)}
+              <ThemedSelect
                 title="Assign to a goal"
-                className="rounded-full border border-ink-900/15 bg-paper-50 px-2.5 py-1.5 text-[11px] text-ink-600 outline-none focus:border-ink-900/40"
-              >
-                <option value="">No goal</option>
-                {goals.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.title}
-                  </option>
-                ))}
-              </select>
+                value={task.goalId ?? ''}
+                onChange={(v) => onAssignGoal(v || undefined)}
+                options={[{ value: '', label: 'No goal' }, ...goals.map((g) => ({ value: g.id, label: g.title }))]}
+              />
             )}
             {!done && onSetRecur && (
-              <select
-                value={task.recur ?? ''}
-                onChange={(e) => onSetRecur((e.target.value || undefined) as Task['recur'])}
+              <ThemedSelect
                 title="Repeat this task"
-                className="rounded-full border border-ink-900/15 bg-paper-50 px-2.5 py-1.5 text-[11px] text-ink-600 outline-none focus:border-ink-900/40"
-              >
-                <option value="">One-off</option>
-                <option value="daily">Daily</option>
-                <option value="weekdays">Weekdays</option>
-                <option value="weekly">Weekly</option>
-              </select>
+                value={task.recur ?? ''}
+                onChange={(v) => onSetRecur((v || undefined) as Task['recur'])}
+                options={[
+                  { value: '', label: 'One-off' },
+                  { value: 'daily', label: 'Daily' },
+                  { value: 'weekdays', label: 'Weekdays' },
+                  { value: 'weekly', label: 'Weekly' },
+                ]}
+              />
             )}
             {task.deliverable && (
               <button onClick={onOpenDeliverable} className="btn-primary !py-1.5 !text-xs">

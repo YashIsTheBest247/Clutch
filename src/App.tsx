@@ -19,10 +19,12 @@ import { Settings } from './components/Settings';
 import { Reveal } from './components/Reveal';
 import { FocusTimer } from './components/FocusTimer';
 import { ProfileMenu } from './components/ProfileMenu';
+import { ControlsMenu } from './components/ControlsMenu';
 import { GoogleSignInButton } from './components/GoogleSignInButton';
 import { AboutModal } from './components/AboutModal';
 import { InsightsModal } from './components/InsightsModal';
 import { GoalsHabits } from './components/GoalsHabits';
+import { HowItWorks } from './components/HowItWorks';
 import { CommandPalette, type Command } from './components/CommandPalette';
 import { Toaster } from './components/Toaster';
 import { downloadICS, scheduleToICS } from './lib/calendar';
@@ -320,6 +322,7 @@ export default function App() {
     { id: 'theme', label: 'Toggle dark / light theme', icon: theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />, run: toggleTheme },
     { id: 'remind', label: 'Toggle browser reminders', icon: <Bell className="h-4 w-4" />, run: toggleReminders },
     { id: 'voice', label: 'Toggle voice replies', icon: <Speaker className="h-4 w-4" />, run: toggleVoice },
+    { id: 'converse', label: converseOn ? 'End hands-free conversation' : 'Talk to Clutch (hands-free)', icon: <Mic className="h-4 w-4" />, run: toggleConverse, disabled: !convo.supported || !tts.supported },
     { id: 'go-pri', label: 'Go to Priorities', hint: 'section', icon: <ArrowUpRight className="h-4 w-4" />, run: () => scrollToId('priorities') },
     { id: 'go-plan', label: 'Go to Plan', hint: 'section', icon: <ArrowUpRight className="h-4 w-4" />, run: () => scrollToId('plan') },
     { id: 'go-goals', label: 'Go to Goals & habits', hint: 'section', icon: <ArrowUpRight className="h-4 w-4" />, run: () => scrollToId('goals') },
@@ -355,6 +358,7 @@ export default function App() {
             <button onClick={() => scrollToId('priorities')} className="transition-colors hover:text-ink-900">Priorities</button>
             <button onClick={() => scrollToId('plan')} className="transition-colors hover:text-ink-900">Plan</button>
             <button onClick={() => scrollToId('agent')} className="transition-colors hover:text-ink-900">Agent</button>
+            <button onClick={() => scrollToId('how')} className="transition-colors hover:text-ink-900">How it works</button>
             <button
               onClick={() => setPaletteOpen(true)}
               title="Command palette"
@@ -371,49 +375,14 @@ export default function App() {
             >
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
-            <button
-              onClick={toggleReminders}
-              title={remindersOn ? 'Reminders on' : 'Enable browser reminders'}
-              className={`hidden h-9 w-9 items-center justify-center rounded-full border transition-all hover:-translate-y-0.5 hover:scale-105 active:scale-95 sm:flex ${
-                remindersOn
-                  ? 'border-transparent bg-ink-900 text-paper-50'
-                  : 'border-ink-900/15 bg-paper-50 text-ink-900 hover:border-ink-900/40 hover:bg-stone-100'
-              }`}
-            >
-              <Bell className="h-4 w-4" />
-            </button>
-            {tts.supported && (
-              <button
-                onClick={toggleVoice}
-                title={voiceOut ? 'Voice replies on' : 'Voice replies off'}
-                className={`hidden h-9 w-9 items-center justify-center rounded-full border transition-all hover:-translate-y-0.5 hover:scale-105 active:scale-95 sm:flex ${
-                  voiceOut || tts.speaking
-                    ? 'border-transparent bg-ink-900 text-paper-50'
-                    : 'border-ink-900/15 bg-paper-50 text-ink-900 hover:border-ink-900/40 hover:bg-stone-100'
-                }`}
-              >
-                <Speaker className={`h-4 w-4 ${tts.speaking ? 'animate-pulse' : ''}`} />
-              </button>
-            )}
-            {convo.supported && tts.supported && (
-              <button
-                onClick={toggleConverse}
-                title={converseOn ? 'End hands-free conversation' : 'Talk to Clutch (hands-free)'}
-                className={`relative flex h-9 w-9 items-center justify-center rounded-full border transition-all hover:-translate-y-0.5 hover:scale-105 active:scale-95 ${
-                  converseOn
-                    ? 'border-transparent bg-signal-red text-white'
-                    : 'border-ink-900/15 bg-paper-50 text-ink-900 hover:border-ink-900/40 hover:bg-stone-100'
-                }`}
-              >
-                <Mic className="h-4 w-4" />
-                {convo.listening && (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-signal-red opacity-75 animate-pulse-ring" />
-                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-signal-red" />
-                  </span>
-                )}
-              </button>
-            )}
+            <ControlsMenu
+              items={[
+                { id: 'remind', icon: <Bell className="h-4 w-4" />, label: 'Browser reminders', active: remindersOn, onClick: toggleReminders },
+                { id: 'voice', icon: <Speaker className="h-4 w-4" />, label: 'Voice replies', active: voiceOut, disabled: !tts.supported, onClick: toggleVoice },
+                { id: 'converse', icon: <Mic className="h-4 w-4" />, label: 'Hands-free conversation', active: converseOn, disabled: !convo.supported || !tts.supported, onClick: toggleConverse },
+                { id: 'brief', icon: <Play className="h-4 w-4" />, label: 'Spoken daily briefing', disabled: thinking || open.length === 0, onClick: requestBriefing },
+              ]}
+            />
             <button
               onClick={rescueMe}
               disabled={thinking || open.length === 0}
@@ -422,15 +391,6 @@ export default function App() {
             >
               <Lifebuoy className={`h-3.5 w-3.5 ${rescuing ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline">{rescuing ? 'Rescuing…' : 'Rescue me'}</span>
-            </button>
-            <button
-              onClick={requestBriefing}
-              disabled={thinking || open.length === 0}
-              title="Spoken daily briefing"
-              className="hidden btn-ghost !px-3 !text-xs sm:inline-flex"
-            >
-              <Play className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Briefing</span>
             </button>
             <button
               onClick={planMyDay}
@@ -727,6 +687,9 @@ export default function App() {
           />
         </Reveal>
       </section>
+
+      {/* How it works */}
+      <HowItWorks />
 
       {/* Marquee strip — quiet, monochrome, pauses on hover */}
       <Reveal className="mt-8">
