@@ -8,6 +8,7 @@ import { useReminders } from './lib/useReminders';
 import { useConversation } from './lib/useConversation';
 import { useToasts } from './lib/useToasts';
 import { useTheme } from './lib/useTheme';
+import { useGoogleAuth } from './lib/useGoogleAuth';
 import type { Task } from './types';
 import { Composer } from './components/Composer';
 import { TaskCard } from './components/TaskCard';
@@ -18,6 +19,7 @@ import { Settings } from './components/Settings';
 import { Reveal } from './components/Reveal';
 import { FocusTimer } from './components/FocusTimer';
 import { ProfileMenu } from './components/ProfileMenu';
+import { GoogleSignInButton } from './components/GoogleSignInButton';
 import { AboutModal } from './components/AboutModal';
 import { InsightsModal } from './components/InsightsModal';
 import { GoalsHabits } from './components/GoalsHabits';
@@ -88,6 +90,16 @@ export default function App() {
   const streak = state.streak?.count ?? 0;
   const toasts = useToasts();
   const { theme, toggle: toggleTheme } = useTheme();
+  const auth = useGoogleAuth();
+
+  // Personalize from the Google account on sign-in.
+  useEffect(() => {
+    if (auth.user) {
+      const n = auth.user.given_name || auth.user.name;
+      if (n && state.profile.name !== n) store.setProfile({ name: n });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth.user?.sub]);
 
   // Undoable task actions.
   const removeTask = (t: Task) => {
@@ -438,17 +450,28 @@ export default function App() {
                 </>
               )}
             </button>
+            {auth.enabled && !auth.user && (
+              <div className="hidden sm:block">
+                <GoogleSignInButton render={auth.renderButton} />
+              </div>
+            )}
             <ProfileMenu
               profile={state.profile}
+              user={auth.user}
               onProfile={() => setShowSettings(true)}
               onInsights={() => setShowInsights(true)}
               onAbout={() => setShowAbout(true)}
               onReset={resetAll}
+              onSignOut={auth.enabled ? auth.signOut : undefined}
             >
               <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-ink-900/15 bg-paper-50 py-1 pl-1 pr-2 transition-all hover:-translate-y-0.5 hover:border-ink-900/40 hover:shadow-soft">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ink-900 text-[11px] font-bold text-paper-50">
-                  {(state.profile.name?.[0] || 'U').toUpperCase()}
-                </span>
+                {auth.user?.picture ? (
+                  <img src={auth.user.picture} alt="" className="h-7 w-7 rounded-full" referrerPolicy="no-referrer" />
+                ) : (
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ink-900 text-[11px] font-bold text-paper-50">
+                    {(state.profile.name?.[0] || 'U').toUpperCase()}
+                  </span>
+                )}
                 <Gear className="h-3.5 w-3.5 text-ink-500" />
               </span>
             </ProfileMenu>

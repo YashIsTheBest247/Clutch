@@ -10,9 +10,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, 'dist');
 const PORT = process.env.PORT || 8080;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.API_KEY || '';
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 
-// Injected into index.html so the client reads the key at runtime (no rebuild).
-const ENV_SCRIPT = `<script>window.__ENV__=${JSON.stringify({ GEMINI_API_KEY })};</script>`;
+// Injected into index.html so the client reads config at runtime (no rebuild).
+const ENV_SCRIPT = `<script>window.__ENV__=${JSON.stringify({ GEMINI_API_KEY, GOOGLE_CLIENT_ID })};</script>`;
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',

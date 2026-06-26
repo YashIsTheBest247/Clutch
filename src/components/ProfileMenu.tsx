@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 import type { UserProfile } from '../types';
-import { Chart, Gear, Info, Trash } from './icons';
+import type { GoogleUser } from '../lib/useGoogleAuth';
+import { Chart, Gear, Info, Trash, X } from './icons';
 
 function Item({
   icon,
@@ -29,17 +30,21 @@ function Item({
 export function ProfileMenu({
   profile,
   children,
+  user,
   onProfile,
   onInsights,
   onAbout,
   onReset,
+  onSignOut,
 }: {
   profile: UserProfile;
   children: ReactElement; // the avatar trigger
+  user?: GoogleUser | null;
   onProfile: () => void;
   onInsights: () => void;
   onAbout: () => void;
   onReset: () => void;
+  onSignOut?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -71,16 +76,25 @@ export function ProfileMenu({
 
       {open && (
         <div className="absolute right-0 top-12 z-50 w-60 animate-fade-up rounded-2xl border border-ink-900/[0.06] bg-paper-50 p-1.5 shadow-panel">
-          <div className="px-3 py-2">
-            <p className="font-display text-sm font-semibold text-ink-900">{profile.name}</p>
-            <p className="text-[11px] text-ink-500">{profile.role}</p>
+          <div className="flex items-center gap-2.5 px-3 py-2">
+            {user?.picture && (
+              <img src={user.picture} alt="" className="h-8 w-8 shrink-0 rounded-full" referrerPolicy="no-referrer" />
+            )}
+            <div className="min-w-0">
+              <p className="truncate font-display text-sm font-semibold text-ink-900">{user?.name || profile.name}</p>
+              <p className="truncate text-[11px] text-ink-500">{user?.email || profile.role}</p>
+            </div>
           </div>
           <div className="my-1 h-px bg-ink-900/[0.06]" />
           <Item icon={<Gear className="h-4 w-4" />} label="Profile & preferences" onClick={act(onProfile)} />
           <Item icon={<Chart className="h-4 w-4" />} label="Insights" onClick={act(onInsights)} />
           <Item icon={<Info className="h-4 w-4" />} label="About Clutch" onClick={act(onAbout)} />
           <div className="my-1 h-px bg-ink-900/[0.06]" />
-          <Item icon={<Trash className="h-4 w-4" />} label="Reset everything" danger onClick={act(onReset)} />
+          {user && onSignOut ? (
+            <Item icon={<X className="h-4 w-4" />} label="Sign out" onClick={act(onSignOut)} />
+          ) : (
+            <Item icon={<Trash className="h-4 w-4" />} label="Reset everything" danger onClick={act(onReset)} />
+          )}
         </div>
       )}
     </div>
