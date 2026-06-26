@@ -1,0 +1,5 @@
+{
+  "name": "Clutch — Your AI Chief of Staff",
+  "description": "An autonomous AI productivity companion that captures your commitments, prioritizes them by deadline and impact, schedules focus blocks, and drafts the actual deliverables — so you never miss a deadline.",
+  "requestFramePermissions": ["microphone"]
+}

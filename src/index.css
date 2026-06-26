@@ -1,0 +1,192 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+  color: #161513;
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  /* Warm taupe world with a faint architectural grid, like the reference. */
+  background-color: #cfc9bf;
+  background-image:
+    linear-gradient(to right, rgba(22, 21, 19, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(22, 21, 19, 0.035) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: #161513;
+  color: #fff;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(22, 21, 19, 0.16);
+  border-radius: 99px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(22, 21, 19, 0.3);
+  background-clip: content-box;
+}
+
+@layer components {
+  /* White card — the primary surface. */
+  .card {
+    @apply rounded-3xl border border-ink-900/[0.06] bg-paper-50 shadow-card;
+  }
+  /* Gently tinted panel — secondary work surfaces. */
+  .panel {
+    @apply rounded-3xl border border-ink-900/[0.06] bg-stone-100 shadow-soft;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold
+      transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-ink-900 text-paper-50 hover:bg-ink-800 shadow-glow;
+  }
+  .btn-dark {
+    @apply btn bg-ink-900 text-paper-50 hover:bg-ink-800;
+  }
+  .btn-ghost {
+    @apply btn border border-ink-900/15 bg-paper-50 text-ink-900 hover:border-ink-900/40;
+  }
+  .btn-ghost-dark {
+    @apply btn border border-ink-900/15 bg-paper-50 text-ink-900 hover:border-ink-900/40;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold;
+  }
+  .label {
+    @apply text-[11px] font-semibold uppercase tracking-[0.1em];
+  }
+  .input {
+    @apply w-full rounded-2xl border border-ink-900/15 bg-paper-50 px-3.5 py-2.5 text-sm text-ink-900
+      placeholder:text-ink-500/70 outline-none focus:border-ink-900/50 focus:ring-2 focus:ring-ink-900/10;
+  }
+  .input-dark {
+    @apply input;
+  }
+}
+
+/* Twinkle — gentle rotate + scale for decorative sparkles. */
+@keyframes twinkle {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: rotate(90deg) scale(1.15);
+    opacity: 1;
+  }
+}
+.animate-twinkle {
+  animation: twinkle 2.8s ease-in-out infinite;
+}
+
+/* Scroll-reveal primitive. */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 0.65s cubic-bezier(0.22, 0.61, 0.36, 1),
+    transform 0.65s cubic-bezier(0.22, 0.61, 0.36, 1);
+  will-change: opacity, transform;
+}
+.reveal.in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Hover lift for interactive cards. */
+.lift {
+  transition:
+    transform 0.28s cubic-bezier(0.22, 0.61, 0.36, 1),
+    box-shadow 0.28s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 1px 2px rgba(22, 21, 19, 0.05), 0 26px 50px -28px rgba(22, 21, 19, 0.4);
+}
+
+/* Quiet marquee strip — runs right-to-left, pauses on hover. */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee-track {
+  display: inline-flex;
+  white-space: nowrap;
+  will-change: transform;
+  animation: marquee 28s linear infinite;
+}
+.marquee-wrap:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+/* Respect users who prefer less motion. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .lift:hover {
+    transform: none;
+  }
+  .marquee-track,
+  .animate-fade-up,
+  .animate-twinkle {
+    animation: none !important;
+  }
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(22, 21, 19, 0.05), transparent);
+  animation: shimmer 1.6s infinite;
+}
