@@ -15,6 +15,12 @@ export interface Store {
   toggleSubtask: (taskId: string, subId: string) => void;
   setTaskStatus: (taskId: string, status: Task['status']) => void;
   deleteTask: (taskId: string) => void;
+  assignTaskGoal: (taskId: string, goalId?: string) => void;
+  addGoal: (title: string) => void;
+  deleteGoal: (id: string) => void;
+  addHabit: (title: string) => void;
+  toggleHabitToday: (id: string) => void;
+  deleteHabit: (id: string) => void;
   clearAll: () => void;
 }
 
@@ -141,8 +147,60 @@ export function useStore(): Store {
     }));
   }, []);
 
+  const assignTaskGoal = useCallback((taskId: string, goalId?: string) => {
+    setState((s) => ({
+      ...s,
+      tasks: s.tasks.map((t) => (t.id === taskId ? { ...t, goalId } : t)),
+    }));
+  }, []);
+
+  const addGoal = useCallback((title: string) => {
+    if (!title.trim()) return;
+    setState((s) => ({
+      ...s,
+      goals: [...(s.goals ?? []), { id: uid('goal'), title: title.trim(), createdAt: new Date().toISOString() }],
+    }));
+  }, []);
+
+  const deleteGoal = useCallback((id: string) => {
+    setState((s) => ({
+      ...s,
+      goals: (s.goals ?? []).filter((g) => g.id !== id),
+      tasks: s.tasks.map((t) => (t.goalId === id ? { ...t, goalId: undefined } : t)),
+    }));
+  }, []);
+
+  const addHabit = useCallback((title: string) => {
+    if (!title.trim()) return;
+    setState((s) => ({
+      ...s,
+      habits: [...(s.habits ?? []), { id: uid('habit'), title: title.trim(), history: [], createdAt: new Date().toISOString() }],
+    }));
+  }, []);
+
+  const toggleHabitToday = useCallback((id: string) => {
+    const today = todayStr();
+    setState((s) => ({
+      ...s,
+      habits: (s.habits ?? []).map((h) =>
+        h.id !== id
+          ? h
+          : {
+              ...h,
+              history: h.history.includes(today)
+                ? h.history.filter((d) => d !== today)
+                : [...h.history, today],
+            },
+      ),
+    }));
+  }, []);
+
+  const deleteHabit = useCallback((id: string) => {
+    setState((s) => ({ ...s, habits: (s.habits ?? []).filter((h) => h.id !== id) }));
+  }, []);
+
   const clearAll = useCallback(() => {
-    setState((s) => ({ ...s, tasks: [], schedule: [], messages: [] }));
+    setState((s) => ({ ...s, tasks: [], schedule: [], messages: [], goals: [], habits: [] }));
   }, []);
 
   // Refresh urgency scores periodically so deadline pressure stays live.
@@ -167,6 +225,12 @@ export function useStore(): Store {
     toggleSubtask,
     setTaskStatus,
     deleteTask,
+    assignTaskGoal,
+    addGoal,
+    deleteGoal,
+    addHabit,
+    toggleHabitToday,
+    deleteHabit,
     clearAll,
   };
 }

@@ -1,4 +1,4 @@
-import type { Task } from '../types';
+import type { Goal, Task } from '../types';
 import { formatDeadline } from '../lib/scheduler';
 import { ArrowUpRight, Check, Clock, Doc, Layers, Play } from './icons';
 
@@ -22,6 +22,8 @@ export function TaskCard({
   onOpenDeliverable,
   onDelete,
   onFocus,
+  goals,
+  onAssignGoal,
 }: {
   task: Task;
   onToggleSub: (subId: string) => void;
@@ -29,6 +31,8 @@ export function TaskCard({
   onOpenDeliverable: () => void;
   onDelete: () => void;
   onFocus?: () => void;
+  goals?: Goal[];
+  onAssignGoal?: (goalId?: string) => void;
 }) {
   const dl = formatDeadline(task.deadline);
   const done = task.status === 'done';
@@ -108,7 +112,22 @@ export function TaskCard({
             </div>
           )}
 
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {!done && goals && goals.length > 0 && onAssignGoal && (
+              <select
+                value={task.goalId ?? ''}
+                onChange={(e) => onAssignGoal(e.target.value || undefined)}
+                title="Assign to a goal"
+                className="rounded-full border border-ink-900/15 bg-paper-50 px-2.5 py-1.5 text-[11px] text-ink-600 outline-none focus:border-ink-900/40"
+              >
+                <option value="">No goal</option>
+                {goals.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.title}
+                  </option>
+                ))}
+              </select>
+            )}
             {task.deliverable && (
               <button onClick={onOpenDeliverable} className="btn-primary !py-1.5 !text-xs">
                 <Doc className="h-3.5 w-3.5" /> Open {task.deliverable.kind}

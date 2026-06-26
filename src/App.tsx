@@ -4,6 +4,7 @@ import { hasApiKey } from './lib/gemini';
 import { formatDeadline, slippage } from './lib/scheduler';
 import { useCountUp, useInView } from './lib/anim';
 import { useTTS } from './lib/useTTS';
+import { useReminders } from './lib/useReminders';
 import type { Task } from './types';
 import { Composer } from './components/Composer';
 import { TaskCard } from './components/TaskCard';
@@ -15,7 +16,8 @@ import { Reveal } from './components/Reveal';
 import { FocusTimer } from './components/FocusTimer';
 import { ProfileMenu } from './components/ProfileMenu';
 import { AboutModal } from './components/AboutModal';
-import { ArrowUpRight, Calendar, Check, Doc, Flame, Gear, Lifebuoy, Play, Speaker, Sparkle, X } from './components/icons';
+import { GoalsHabits } from './components/GoalsHabits';
+import { ArrowUpRight, Bell, Calendar, Check, Doc, Flame, Gear, Lifebuoy, Play, Speaker, Sparkle, X } from './components/icons';
 import { Logo } from './components/Logo';
 
 function StatCard({
@@ -77,6 +79,21 @@ export default function App() {
   // Proactive: detect slipping work on load (deterministic, no API spend).
   const slip = useMemo(() => slippage(state.tasks, new Date()), [state.tasks]);
   const slipping = slip.overdue.length + slip.atRisk.length;
+
+  // Context-aware browser reminders.
+  const [remindersOn, setRemindersOn] = useState(false);
+  useReminders(state.tasks, state.schedule, remindersOn);
+  const toggleReminders = async () => {
+    if (typeof Notification === 'undefined') return;
+    if (remindersOn) {
+      setRemindersOn(false);
+      return;
+    }
+    let perm = Notification.permission;
+    if (perm === 'default') perm = await Notification.requestPermission();
+    if (perm === 'granted') setRemindersOn(true);
+    else alert('Allow notifications in your browser to get deadline & focus reminders.');
+  };
 
   // Voice-out: speak the agent's daily briefing (and optionally every reply).
   const tts = useTTS();
@@ -197,6 +214,17 @@ export default function App() {
             <button onClick={() => scrollToId('agent')} className="transition-colors hover:text-ink-900">Agent</button>
           </nav>
           <div className="flex items-center gap-2">
+            <button
+              onClick={toggleReminders}
+              title={remindersOn ? 'Reminders on' : 'Enable browser reminders'}
+              className={`hidden h-9 w-9 items-center justify-center rounded-full border transition-colors sm:flex ${
+                remindersOn
+                  ? 'border-transparent bg-ink-900 text-paper-50'
+                  : 'border-ink-900/15 bg-paper-50 text-ink-900 hover:border-ink-900/40'
+              }`}
+            >
+              <Bell className="h-4 w-4" />
+            </button>
             {tts.supported && (
               <button
                 onClick={toggleVoice}
@@ -408,6 +436,8 @@ export default function App() {
                     onOpenDeliverable={() => setOpenTask(t)}
                     onDelete={() => store.deleteTask(t.id)}
                     onFocus={() => setFocusTask(t)}
+                    goals={state.goals}
+                    onAssignGoal={(gid) => store.assignTaskGoal(t.id, gid)}
                   />
                 </Reveal>
               ))}
@@ -436,6 +466,22 @@ export default function App() {
           </Reveal>
         </section>
       </div>
+
+      {/* Goals & Habits */}
+      <section id="goals" className="mt-4 scroll-mt-24">
+        <Reveal>
+          <GoalsHabits
+            goals={state.goals ?? []}
+            habits={state.habits ?? []}
+            tasks={state.tasks}
+            onAddGoal={store.addGoal}
+            onDeleteGoal={store.deleteGoal}
+            onAddHabit={store.addHabit}
+            onToggleHabit={store.toggleHabitToday}
+            onDeleteHabit={store.deleteHabit}
+          />
+        </Reveal>
+      </section>
 
       {/* Marquee strip — quiet, monochrome, pauses on hover */}
       <Reveal className="mt-8">

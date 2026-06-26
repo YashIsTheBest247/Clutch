@@ -17,7 +17,22 @@ export function emptyState(): AppState {
     schedule: [],
     messages: [],
     streak: { count: 0 },
+    goals: [],
+    habits: [],
   };
+}
+
+/** Trailing consecutive-day streak for a habit's completion history. */
+export function habitStreak(history: string[]): number {
+  const set = new Set(history);
+  const d = new Date();
+  if (!set.has(todayStr(d))) d.setDate(d.getDate() - 1); // today not done yet → don't break streak
+  let streak = 0;
+  while (set.has(todayStr(d))) {
+    streak++;
+    d.setDate(d.getDate() - 1);
+  }
+  return streak;
 }
 
 /** Local calendar date as YYYY-MM-DD. */

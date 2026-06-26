@@ -29,6 +29,8 @@ export interface Task {
   deliverable?: Deliverable;
   /** When the agent has placed this on the calendar. */
   scheduledFor?: string;
+  /** Optional goal this task contributes to. */
+  goalId?: string;
   createdAt: string;
   /** RICE-style composite the agent computes for ordering. */
   urgencyScore?: number;
@@ -82,6 +84,21 @@ export interface Streak {
   lastDate?: string;
 }
 
+export interface Goal {
+  id: string;
+  title: string;
+  deadline?: string;
+  createdAt: string;
+}
+
+export interface Habit {
+  id: string;
+  title: string;
+  /** Local YYYY-MM-DD dates the habit was completed. */
+  history: string[];
+  createdAt: string;
+}
+
 export interface AppState {
   profile: UserProfile;
   tasks: Task[];
@@ -89,4 +106,6 @@ export interface AppState {
   messages: AgentMessage[];
   lastReviewAt?: string;
   streak?: Streak;
+  goals?: Goal[];
+  habits?: Habit[];
 }
