@@ -66,7 +66,12 @@ export function useStore(): Store {
   const sendToAgent = useCallback(
     async (text: string, image?: AgentImage) => {
       if ((!text.trim() && !image) || thinking) return;
-      pushMessage({ role: 'user', content: image ? `${text || ''} 📎 image attached`.trim() : text });
+      pushMessage({
+        role: 'user',
+        content: image
+          ? `${text || ''} 📎 ${image.mimeType === 'application/pdf' ? 'PDF' : 'image'} attached`.trim()
+          : text,
+      });
       setThinking(true);
       setLiveActions([]);
       setStreamingText('');
