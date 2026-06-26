@@ -13,7 +13,9 @@ import { DeliverableModal } from './components/DeliverableModal';
 import { Settings } from './components/Settings';
 import { Reveal } from './components/Reveal';
 import { FocusTimer } from './components/FocusTimer';
-import { ArrowUpRight, Calendar, Check, Doc, Flame, Play, Speaker, Sparkle } from './components/icons';
+import { ProfileMenu } from './components/ProfileMenu';
+import { AboutModal } from './components/AboutModal';
+import { ArrowUpRight, Calendar, Check, Doc, Flame, Gear, Play, Speaker, Sparkle } from './components/icons';
 import { Logo } from './components/Logo';
 
 function StatCard({
@@ -65,7 +67,9 @@ export default function App() {
   const { state, thinking, liveActions } = store;
   const [openTask, setOpenTask] = useState<Task | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
   const [focusTask, setFocusTask] = useState<Task | null>(null);
+  const [planning, setPlanning] = useState(false);
   const streak = state.streak?.count ?? 0;
 
   // Voice-out: speak the agent's daily briefing (and optionally every reply).
@@ -113,6 +117,18 @@ export default function App() {
   const scrollToId = (id: string) =>
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
+  const planMyDay = async () => {
+    if (thinking || open.length === 0) return;
+    setPlanning(true);
+    try {
+      await store.sendToAgent('Review everything and build the best plan for me right now.');
+    } finally {
+      setPlanning(false);
+      // Let the new message render, then reveal the live agent chat.
+      setTimeout(() => scrollToId('agent'), 120);
+    }
+  };
+
   const open = state.tasks.filter((t) => t.status !== 'done');
   const sorted = useMemo(
     () =>
@@ -139,7 +155,13 @@ export default function App() {
       <header className="sticky top-2 z-30 mb-5">
         <div className="flex items-center justify-between gap-2 rounded-full border border-ink-900/[0.06] bg-paper-50/80 px-3 py-2 shadow-soft backdrop-blur-md sm:px-4 sm:py-2.5">
           <div className="flex items-center gap-2.5">
-            <Logo markClassName="h-8 w-8 text-ink-900" />
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              title="Back to top"
+              className="rounded-full transition-transform hover:scale-[1.02] active:scale-95"
+            >
+              <Logo markClassName="h-8 w-8 text-ink-900" />
+            </button>
             <h1 className="sr-only">Clutch</h1>
             {streak > 0 && (
               <span
@@ -179,20 +201,38 @@ export default function App() {
               <span className="hidden sm:inline">Briefing</span>
             </button>
             <button
-              onClick={() => store.sendToAgent('Review everything and build the best plan for me right now.')}
+              onClick={planMyDay}
               disabled={thinking || open.length === 0}
-              className="btn-primary !px-3 !text-xs sm:!px-4"
+              className={`btn-primary !px-3 !text-xs sm:!px-4 ${planning ? 'disabled:!opacity-100' : ''}`}
             >
-              <span className="hidden sm:inline">Plan my day</span>
-              <span className="sm:hidden">Plan</span>
-              <ArrowUpRight className="h-3.5 w-3.5" />
+              {planning ? (
+                <>
+                  <Sparkle className="h-3.5 w-3.5 animate-spin" />
+                  <span className="hidden sm:inline">Planning…</span>
+                </>
+              ) : (
+                <>
+                  <span className="hidden sm:inline">Plan my day</span>
+                  <span className="sm:hidden">Plan</span>
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </>
+              )}
             </button>
-            <button
-              onClick={() => setShowSettings(true)}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink-900/15 bg-paper-50 text-xs font-bold text-ink-900 transition-colors hover:border-ink-900/40"
+            <ProfileMenu
+              profile={state.profile}
+              onProfile={() => setShowSettings(true)}
+              onAbout={() => setShowAbout(true)}
+              onReset={() => {
+                if (confirm('Clear all tasks, schedule and history?')) store.clearAll();
+              }}
             >
-              {(state.profile.name?.[0] || 'U').toUpperCase()}
-            </button>
+              <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-ink-900/15 bg-paper-50 py-1 pl-1 pr-2 transition-colors hover:border-ink-900/40">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ink-900 text-[11px] font-bold text-paper-50">
+                  {(state.profile.name?.[0] || 'U').toUpperCase()}
+                </span>
+                <Gear className="h-3.5 w-3.5 text-ink-500" />
+              </span>
+            </ProfileMenu>
           </div>
         </div>
       </header>
@@ -394,6 +434,7 @@ export default function App() {
           onComplete={() => store.setTaskStatus(focusTask.id, 'done')}
         />
       )}
+      {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
       {openTask && <DeliverableModal task={openTask} onClose={() => setOpenTask(null)} />}
       {showSettings && (
         <Settings
