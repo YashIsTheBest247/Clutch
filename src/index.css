@@ -328,6 +328,20 @@ body {
   animation-play-state: paused;
 }
 
+/* Gentle first-paint fade so a refresh settles in smoothly (opacity only —
+   no transform, so sticky header / fixed widgets keep their containing block). */
+@keyframes app-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.app-in {
+  animation: app-in 0.45s ease-out both;
+}
+
 /* Respect users who prefer less motion. */
 @media (prefers-reduced-motion: reduce) {
   html {
@@ -346,7 +360,8 @@ body {
   .animate-twinkle,
   .animate-pop,
   .animate-indeterminate,
-  .animate-bob {
+  .animate-bob,
+  .app-in {
     animation: none !important;
   }
 }

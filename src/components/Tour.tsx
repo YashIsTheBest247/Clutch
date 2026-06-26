@@ -26,17 +26,29 @@ function isVisible(sel: string): boolean {
 }
 
 export function Tour({ onFinish }: { onFinish: () => void }) {
-  // Resolve once which steps actually apply to this viewport, so numbering is
-  // continuous (1…N) instead of skipping hidden steps (1 → 5 → 6).
-  const [steps] = useState<Step[]>(() => STEPS.filter((s) => isVisible(s.sel)));
+  // Resolve which steps apply to this viewport AFTER mount — querying during the
+  // first render reads an un-committed DOM (everything 0×0) and would wrongly end
+  // the tour. Numbering stays continuous (1…N), skipping only truly hidden steps.
+  const [steps, setSteps] = useState<Step[] | null>(null);
   const [i, setI] = useState(0);
   const [rect, setRect] = useState<Rect | null>(null);
-  const step = steps[i];
-  const last = i === steps.length - 1;
+  const step = steps ? steps[i] : undefined;
+  const last = !!steps && i === steps.length - 1;
 
   useEffect(() => {
+    // One frame lets layout settle on a hard refresh before we measure.
+    const id = requestAnimationFrame(() => {
+      const visible = STEPS.filter((s) => isVisible(s.sel));
+      if (visible.length) setSteps(visible);
+      else onFinish();
+    });
+    return () => cancelAnimationFrame(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!steps) return;
     if (!step) {
-      // Nothing visible to show — close gracefully.
       onFinish();
       return;
     }
@@ -65,9 +77,9 @@ export function Tour({ onFinish }: { onFinish: () => void }) {
       window.removeEventListener('scroll', update, true);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [i]);
+  }, [i, steps]);
 
-  if (!rect) return null;
+  if (!steps || !step || !rect) return null;
 
   const boxW = 264;
   const pad = 14;

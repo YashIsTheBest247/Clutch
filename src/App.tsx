@@ -530,7 +530,7 @@ export default function App() {
   ];
 
   return (
-    <div className="mx-auto min-h-screen max-w-7xl px-3 py-4 sm:px-4 sm:py-5 lg:px-6">
+    <div className="app-in mx-auto min-h-screen max-w-7xl px-3 py-4 sm:px-4 sm:py-5 lg:px-6">
       {/* Header — clean pill nav */}
       <header className="sticky top-2 z-30 mb-5">
         <div className="flex items-center justify-between gap-2 rounded-full border border-ink-900/[0.06] bg-paper-50/80 px-3 py-2 shadow-soft backdrop-blur-md sm:px-4 sm:py-2.5">

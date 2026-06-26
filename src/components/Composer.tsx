@@ -115,7 +115,7 @@ export function Composer({
         </div>
       )}
 
-      <div className="flex items-end gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
         <div className="relative flex-1">
           <textarea
             value={text}
@@ -128,7 +128,7 @@ export function Composer({
             }}
             rows={text.split('\n').length > 2 ? 4 : 2}
             placeholder="Paste an email or syllabus, drop a PDF or photo of your notes, type, or just talk…"
-            className="input resize-none pr-10"
+            className="input min-h-[112px] resize-none pr-10 sm:min-h-0"
           />
           {listening && (
             <span className="pointer-events-none absolute right-3 top-3 flex h-3 w-3">
@@ -137,7 +137,7 @@ export function Composer({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end gap-2">
           <input
             ref={imageRef}
             type="file"
