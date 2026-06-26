@@ -223,6 +223,19 @@ body {
   }
 }
 
+/* Indeterminate progress bar (the "thinking" status). */
+@keyframes indeterminate {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(420%);
+  }
+}
+.animate-indeterminate {
+  animation: indeterminate 1.4s ease-in-out infinite;
+}
+
 /* Pop — a satisfying check-off animation. */
 @keyframes pop {
   0% {
@@ -317,7 +330,8 @@ body {
   .marquee-track,
   .animate-fade-up,
   .animate-twinkle,
-  .animate-pop {
+  .animate-pop,
+  .animate-indeterminate {
     animation: none !important;
   }
 }

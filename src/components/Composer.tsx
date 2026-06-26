@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useVoice } from '../lib/useVoice';
 import type { AgentImage } from '../lib/agent';
+import { ThinkingStatus } from './ThinkingStatus';
 import { Image as ImageIcon, Mic, Send, Sparkle, X } from './icons';
 
 const SUGGESTIONS = [
@@ -135,7 +136,9 @@ export function Composer({
         </div>
       </div>
 
-      {empty && !attached && (
+      {thinking && <ThinkingStatus />}
+
+      {!thinking && empty && !attached && (
         <div className="mt-3 flex flex-wrap gap-2">
           {SUGGESTIONS.map((s) => (
             <button

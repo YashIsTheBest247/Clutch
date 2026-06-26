@@ -263,6 +263,12 @@ export default function App() {
   const scrollToId = (id: string) =>
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
+  // Composer send: process, then reveal the Priorities / Plan / Agent area.
+  const handleCompose = async (text: string, image?: Parameters<typeof store.sendToAgent>[1]) => {
+    await store.sendToAgent(text, image);
+    setTimeout(() => scrollToId('priorities'), 150);
+  };
+
   const planMyDay = async () => {
     if (thinking || open.length === 0) return;
     setPlanning(true);
@@ -664,7 +670,7 @@ export default function App() {
 
       {/* Composer */}
       <Reveal className="mb-4">
-        <Composer onSend={store.sendToAgent} thinking={thinking} empty={state.tasks.length === 0} />
+        <Composer onSend={handleCompose} thinking={thinking} empty={state.tasks.length === 0} />
       </Reveal>
 
       {/* Main grid */}
