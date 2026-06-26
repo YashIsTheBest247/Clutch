@@ -637,6 +637,7 @@ export default function App() {
                     goals={state.goals}
                     onAssignGoal={(gid) => store.assignTaskGoal(t.id, gid)}
                     onSetRecur={(r) => store.setTaskRecur(t.id, r)}
+                    onSetDeadline={(d) => store.setTaskDeadline(t.id, d)}
                   />
                 </Reveal>
               ))}

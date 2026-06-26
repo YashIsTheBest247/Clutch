@@ -1,6 +1,7 @@
 import type { Goal, Task } from '../types';
 import { formatDeadline, formatDuration } from '../lib/scheduler';
 import { ThemedSelect } from './ThemedSelect';
+import { DeadlineEditor } from './DeadlineEditor';
 import { ArrowUpRight, Briefcase, Check, Clock, Doc, Heart, Layers, Play, Wallet } from './icons';
 
 const CAT_TINTS = [
@@ -46,6 +47,7 @@ export function TaskCard({
   goals,
   onAssignGoal,
   onSetRecur,
+  onSetDeadline,
 }: {
   task: Task;
   onToggleSub: (subId: string) => void;
@@ -56,6 +58,7 @@ export function TaskCard({
   goals?: Goal[];
   onAssignGoal?: (goalId?: string) => void;
   onSetRecur?: (recur?: Task['recur']) => void;
+  onSetDeadline?: (deadline?: string) => void;
 }) {
   const dl = formatDeadline(task.deadline);
   const done = task.status === 'done';
@@ -97,9 +100,13 @@ export function TaskCard({
           </div>
 
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-ink-500">
-            <span className={`inline-flex items-center gap-1 ${toneClass[dl.tone]}`}>
-              <Clock className="h-3.5 w-3.5" /> {dl.label}
-            </span>
+            {!done && onSetDeadline ? (
+              <DeadlineEditor value={task.deadline} onChange={onSetDeadline} />
+            ) : (
+              <span className={`inline-flex items-center gap-1 ${toneClass[dl.tone]}`}>
+                <Clock className="h-3.5 w-3.5" /> {dl.label}
+              </span>
+            )}
             <span className="inline-flex items-center gap-1">
               <Layers className="h-3.5 w-3.5" /> {formatDuration(task.estimateMins)}
             </span>

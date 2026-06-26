@@ -32,6 +32,7 @@ export interface Store {
   restoreAll: (snapshot: Partial<AppState>) => void;
   assignTaskGoal: (taskId: string, goalId?: string) => void;
   setTaskRecur: (taskId: string, recur?: Task['recur']) => void;
+  setTaskDeadline: (taskId: string, deadline?: string) => void;
   recordActual: (taskId: string, mins: number) => void;
   addCommitment: (title: string, start: string, end: string) => void;
   deleteCommitment: (id: string) => void;
@@ -173,6 +174,16 @@ export function useStore(): Store {
     setState((s) => ({ ...s, tasks: s.tasks.map((t) => (t.id === taskId ? { ...t, recur } : t)) }));
   }, []);
 
+  const setTaskDeadline = useCallback((taskId: string, deadline?: string) => {
+    const now = new Date();
+    setState((s) => ({
+      ...s,
+      tasks: s.tasks.map((t) =>
+        t.id === taskId ? { ...t, deadline, urgencyScore: computeUrgency({ ...t, deadline }, now) } : t,
+      ),
+    }));
+  }, []);
+
   // Log real focused minutes and learn the user's estimate accuracy.
   const recordActual = useCallback((taskId: string, mins: number) => {
     if (mins <= 0) return;
@@ -303,6 +314,7 @@ export function useStore(): Store {
     restoreAll,
     assignTaskGoal,
     setTaskRecur,
+    setTaskDeadline,
     recordActual,
     addCommitment,
     deleteCommitment,
