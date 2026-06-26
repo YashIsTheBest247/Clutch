@@ -22,49 +22,53 @@ You dump your commitments however you like — **type** them, **paste** an email
 
 ---
 
-## ✨ Features
+##  Features
 
-### 🧠 The agentic core
+###  The agentic core
 - **Streaming Gemini agent** — a multi-step **function-calling** loop (`gemini-2.5-flash`) with 8 real tools that *take action*, not just chat: `add_task`, `decompose_task`, `set_priority`, `generate_deliverable`, `update_task_status`, `build_schedule`, `add_commitment`, `research_web`.
 - **Live web research** — Gemini's **Google Search grounding** pulls real-world facts (opening hours, official portals, prices, dates) to actually complete tasks.
 - **Deliverable generation** — drafts the extension email, the essay outline, the study plan, the checklist — ready to **copy** or **send** (`mailto:`).
 
-### 🎙️ Capture, any way you like
+###  Capture, any way you like
 - **Natural language** + **paste** an email / syllabus / messy notes
-- **📸 Photo capture** — Gemini multimodal reads handwriting, whiteboards, bills, posters (drag, paste, or upload)
-- **🎤 Voice input** (speech-to-text) and **hands-free conversation mode** (speak → it acts → speaks back → auto-listens)
+- **Photo capture** — Gemini multimodal reads handwriting, whiteboards, bills, posters (drag, paste, or upload)
+- **Voice input** (speech-to-text) and **hands-free conversation mode** (speak → it acts → speaks back → auto-listens)
 
-### 🗂️ Plan & prioritize
+###  Plan & prioritize
 - **Intelligent prioritization** — transparent urgency score = deadline proximity × impact, with the agent's reasoning shown
 - **AI scheduling** — packs focus blocks into your working hours, **around fixed commitments** (class, gym, meetings)
 - **Manual deadline editor** — click any task's deadline chip to set/change/clear it (date + time)
-- **🧮 Reality-Check** — honest capacity math: warns when you *physically can't* finish everything in time and suggests what to cut/move
-- **🔁 Recurring tasks** — daily / weekdays / weekly
+- **Reality-Check** — honest capacity math: warns when you *physically can't* finish everything in time and suggests what to cut/move
+- **Recurring tasks** — daily / weekdays / weekly
 
-### ⚡ Get it done
+###  Get it done
 - **Focus timer (Pomodoro)** with a progress ring — and **estimate-learning** that calibrates future time estimates from your real focus sessions
-- **🔥 Streaks + confetti** on completion
-- **🎯 Goals** (with progress bars) and **Habits** (daily check-off + per-habit streaks)
+- **Streaks + confetti** on completion
+- **Goals** (with progress bars) and **Habits** (daily check-off + per-habit streaks)
 
-### 🤖 Proactive, not passive
+###  Proactive, not passive
 - **Proactive slippage nudge** the moment you open the app
-- **🆘 Rescue Mode** — an "I'm overwhelmed" panic button that triages everything into the **3 next actions**
-- **🗣️ Spoken daily briefing** (text-to-speech) that flags what's slipping
-- **🔔 Browser reminders** — deadline-approaching + "focus block starting" notifications
-- **📈 Weekly retrospective** — AI review of what you shipped + next week's plan
+- **Rescue Mode** — an "I'm overwhelmed" panic button that triages everything into the **3 next actions**
+- **Spoken daily briefing** (text-to-speech) that flags what's slipping
+- **Browser reminders** — deadline-approaching + "focus block starting" notifications
+- **Weekly retrospective** — AI review of what you shipped + next week's plan
 
-### 📅 Calendar & integrations
+###  Calendar & integrations
 - **`.ics` export** (focus blocks + deadline reminders with alarms)
 - **Add to Google Calendar** one-click links
 - Schedules **around** your real fixed commitments
 
-### 🎨 Product experience
+###  Product experience
 - **Google Sign-In** (identity) — personalizes greeting + avatar for any user
-- **📊 Insights dashboard** — completion rate, workload, streaks, by-category chart, and a **Gemini-written** "how you work" summary
+- **Insights dashboard** — completion rate, workload, streaks, by-category chart, and a **Gemini-written** "how you work" summary
+- **Floating Quick Notes** — an always-on scratchpad that auto-saves; **draggable** on desktop, a clean **bottom-sheet** on mobile, and can **turn notes into tasks** in one tap
 - **⌘K command palette** for every action
-- **Light / Dark mode** (CSS-variable theming), fully responsive, scroll animations, analog clock picker, themed dropdowns
+- **Engaging processing UX** — a live "Analyzing → Gathering → Generating…" status while the agent works, then auto-scrolls you to the results
+- **Light / Dark mode** (CSS-variable theming) with an in-app toggle
+- **Fully responsive** — collapses to a sticky mobile navbar + hamburger menu with smooth animations
+- **Custom themed inputs** — analog **clock time picker**, themed dropdowns (no jarring native popups)
 - **Installable PWA** — works offline
-- **Toasts + Undo** for delete / complete / reset
+- **Toasts + Undo** for delete / complete / reset, plus confetti on completion
 
 ---
 
