@@ -118,7 +118,7 @@ export function InsightsModal({
             <p className="label text-ink-600">What Clutch notices</p>
             {hasApiKey() && (
               <button onClick={ask} disabled={loading} className="btn-primary !py-1.5 !text-xs">
-                {loading ? <Sparkle className="h-3.5 w-3.5 animate-spin" /> : <Sparkle className="h-3.5 w-3.5" />}
+                {loading && <Sparkle className="h-3.5 w-3.5 animate-spin" />}
                 {loading ? 'Analyzing…' : insight ? 'Refresh' : 'Generate insight'}
               </button>
             )}

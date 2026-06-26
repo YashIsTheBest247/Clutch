@@ -1,10 +1,14 @@
 import { GoogleGenAI } from '@google/genai';
 
-// Resolved at build time by vite.config.ts, which textually replaces these
-// `process.env.*` references with string literals (the value, or "" if unset).
-// Do NOT add a `typeof process` guard — that token is not replaced and would
-// short-circuit the whole expression to "" in the browser.
-const API_KEY = process.env.API_KEY || process.env.GEMINI_API_KEY || '';
+// Key resolution order:
+// 1) Runtime — injected by server.js into `window.__ENV__` from the Cloud Run
+//    env var (preferred for Cloud Run: no key baked into the image, rotatable).
+// 2) Build time — `process.env.API_KEY` is textually replaced by Vite (the
+//    AI Studio convention). Do NOT add a `typeof process` guard here — that
+//    token isn't replaced and would short-circuit the value to "".
+const runtimeKey =
+  (typeof window !== 'undefined' && (window as any).__ENV__?.GEMINI_API_KEY) || '';
+const API_KEY = runtimeKey || process.env.API_KEY || process.env.GEMINI_API_KEY || '';
 
 export const MODEL = 'gemini-2.5-flash';
 

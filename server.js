@@ -9,6 +9,10 @@ import { dirname } from 'node:path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, 'dist');
 const PORT = process.env.PORT || 8080;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.API_KEY || '';
+
+// Injected into index.html so the client reads the key at runtime (no rebuild).
+const ENV_SCRIPT = `<script>window.__ENV__=${JSON.stringify({ GEMINI_API_KEY })};</script>`;
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -43,11 +47,17 @@ const server = createServer(async (req, res) => {
       // SPA fallback
       filePath = join(ROOT, 'index.html');
     }
-    const data = await readFile(filePath);
+    const isHtml = extname(filePath) === '.html';
+    let data = await readFile(filePath);
+    if (isHtml) {
+      // Inject runtime env just before the app's module script.
+      data = Buffer.from(String(data).replace('<script type="module"', `${ENV_SCRIPT}<script type="module"`));
+    }
     const type = MIME[extname(filePath)] || 'application/octet-stream';
-    const cache = filePath.includes(`${join('dist', 'assets')}`)
-      ? 'public, max-age=31536000, immutable'
-      : 'no-cache';
+    const cache =
+      !isHtml && filePath.includes(`${join('dist', 'assets')}`)
+        ? 'public, max-age=31536000, immutable'
+        : 'no-cache';
     res.writeHead(200, { 'Content-Type': type, 'Cache-Control': cache });
     res.end(data);
   } catch (err) {
