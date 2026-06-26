@@ -31,6 +31,7 @@ export function ProfileMenu({
   profile,
   children,
   user,
+  renderSignIn,
   onProfile,
   onInsights,
   onAbout,
@@ -40,6 +41,7 @@ export function ProfileMenu({
   profile: UserProfile;
   children: ReactElement; // the avatar trigger
   user?: GoogleUser | null;
+  renderSignIn?: (el: HTMLElement | null) => void;
   onProfile: () => void;
   onInsights: () => void;
   onAbout: () => void;
@@ -48,6 +50,12 @@ export function ProfileMenu({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const signInRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (open && renderSignIn) renderSignIn(signInRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, renderSignIn]);
 
   useEffect(() => {
     if (!open) return;
@@ -85,6 +93,12 @@ export function ProfileMenu({
               <p className="truncate text-[11px] text-ink-500">{user?.email || profile.role}</p>
             </div>
           </div>
+          {renderSignIn && !user && (
+            <>
+              <div className="my-1 h-px bg-ink-900/[0.06]" />
+              <div ref={signInRef} className="px-3 py-1.5" />
+            </>
+          )}
           <div className="my-1 h-px bg-ink-900/[0.06]" />
           <Item icon={<Gear className="h-4 w-4" />} label="Profile & preferences" onClick={act(onProfile)} />
           <Item icon={<Chart className="h-4 w-4" />} label="Insights" onClick={act(onInsights)} />

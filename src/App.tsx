@@ -401,57 +401,58 @@ export default function App() {
               ⌘K
             </button>
           </nav>
-          <div className="hidden items-center gap-2 lg:flex">
+          <div className="flex items-center gap-2">
+            {/* Theme toggle — visible on all sizes */}
             <button
               onClick={toggleTheme}
               title={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}
-              className="hidden h-9 w-9 items-center justify-center rounded-full border border-ink-900/15 bg-paper-50 text-ink-900 transition-all hover:-translate-y-0.5 hover:scale-105 hover:bg-stone-100 hover:border-ink-900/40 active:scale-95 sm:flex"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-ink-900/15 bg-paper-50 text-ink-900 transition-all hover:-translate-y-0.5 hover:scale-105 hover:bg-stone-100 hover:border-ink-900/40 active:scale-95"
             >
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
-            <ControlsMenu
-              items={[
-                { id: 'remind', icon: <Bell className="h-4 w-4" />, label: 'Browser reminders', active: remindersOn, onClick: toggleReminders },
-                { id: 'voice', icon: <Speaker className="h-4 w-4" />, label: 'Voice replies', active: voiceOut, disabled: !tts.supported, onClick: toggleVoice },
-                { id: 'converse', icon: <Mic className="h-4 w-4" />, label: 'Hands-free conversation', active: converseOn, disabled: !convo.supported || !tts.supported, onClick: toggleConverse },
-                { id: 'brief', icon: <Play className="h-4 w-4" />, label: 'Spoken daily briefing', disabled: thinking || open.length === 0, onClick: requestBriefing },
-              ]}
-            />
-            <button
-              onClick={rescueMe}
-              disabled={thinking || open.length === 0}
-              title="I'm overwhelmed — triage everything now"
-              className="btn !px-3 !text-xs border border-signal-red/40 bg-signal-red/10 text-signal-red hover:bg-signal-red/15"
-            >
-              <Lifebuoy className={`h-3.5 w-3.5 ${rescuing ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">{rescuing ? 'Rescuing…' : 'Rescue me'}</span>
-            </button>
-            <button
-              onClick={planMyDay}
-              disabled={thinking || open.length === 0}
-              className={`btn-primary !px-3 !text-xs sm:!px-4 ${planning ? 'disabled:!opacity-100' : ''}`}
-            >
-              {planning ? (
-                <>
-                  <Sparkle className="h-3.5 w-3.5 animate-spin" />
-                  <span className="hidden sm:inline">Planning…</span>
-                </>
-              ) : (
-                <>
-                  <span className="hidden sm:inline">Plan my day</span>
-                  <span className="sm:hidden">Plan</span>
-                  <ArrowUpRight className="h-3.5 w-3.5" />
-                </>
-              )}
-            </button>
-            {auth.enabled && !auth.user && (
-              <div className="hidden sm:block">
-                <GoogleSignInButton render={auth.renderButton} />
-              </div>
-            )}
+
+            {/* Heavier actions — desktop only (in the hamburger on mobile) */}
+            <div className="hidden items-center gap-2 lg:flex">
+              <ControlsMenu
+                items={[
+                  { id: 'remind', icon: <Bell className="h-4 w-4" />, label: 'Browser reminders', active: remindersOn, onClick: toggleReminders },
+                  { id: 'voice', icon: <Speaker className="h-4 w-4" />, label: 'Voice replies', active: voiceOut, disabled: !tts.supported, onClick: toggleVoice },
+                  { id: 'converse', icon: <Mic className="h-4 w-4" />, label: 'Hands-free conversation', active: converseOn, disabled: !convo.supported || !tts.supported, onClick: toggleConverse },
+                  { id: 'brief', icon: <Play className="h-4 w-4" />, label: 'Spoken daily briefing', disabled: thinking || open.length === 0, onClick: requestBriefing },
+                ]}
+              />
+              <button
+                onClick={rescueMe}
+                disabled={thinking || open.length === 0}
+                title="I'm overwhelmed — triage everything now"
+                className="btn !px-3 !text-xs border border-signal-red/40 bg-signal-red/10 text-signal-red hover:bg-signal-red/15"
+              >
+                <Lifebuoy className={`h-3.5 w-3.5 ${rescuing ? 'animate-spin' : ''}`} />
+                <span>{rescuing ? 'Rescuing…' : 'Rescue me'}</span>
+              </button>
+              <button
+                onClick={planMyDay}
+                disabled={thinking || open.length === 0}
+                className={`btn-primary !px-3 !text-xs sm:!px-4 ${planning ? 'disabled:!opacity-100' : ''}`}
+              >
+                {planning ? (
+                  <>
+                    <Sparkle className="h-3.5 w-3.5 animate-spin" /> Planning…
+                  </>
+                ) : (
+                  <>
+                    Plan my day <ArrowUpRight className="h-3.5 w-3.5" />
+                  </>
+                )}
+              </button>
+              {auth.enabled && !auth.user && <GoogleSignInButton render={auth.renderButton} />}
+            </div>
+
+            {/* Profile / sign-in — visible on all sizes */}
             <ProfileMenu
               profile={state.profile}
               user={auth.user}
+              renderSignIn={auth.enabled && !auth.user ? auth.renderButton : undefined}
               onProfile={() => setShowSettings(true)}
               onInsights={() => setShowInsights(true)}
               onAbout={() => setShowAbout(true)}
@@ -485,46 +486,36 @@ export default function App() {
         </div>
 
         {/* Mobile menu panel */}
-        <div
-          className={`overflow-hidden transition-all duration-300 ease-out lg:hidden ${
-            mobileOpen ? 'mt-2 max-h-[80vh] opacity-100' : 'pointer-events-none max-h-0 opacity-0'
-          }`}
-        >
-          <div className="max-h-[78vh] overflow-y-auto rounded-3xl border border-ink-900/[0.06] bg-paper-50/95 p-2 shadow-panel backdrop-blur-md">
-            <p className="px-3 pb-1 pt-2 label text-ink-500">Navigate</p>
-            <MItem icon={<ArrowUpRight className="h-4 w-4" />} label="Priorities" onClick={() => { scrollToId('priorities'); setMobileOpen(false); }} />
-            <MItem icon={<ArrowUpRight className="h-4 w-4" />} label="Plan" onClick={() => { scrollToId('plan'); setMobileOpen(false); }} />
-            <MItem icon={<ArrowUpRight className="h-4 w-4" />} label="Agent" onClick={() => { scrollToId('agent'); setMobileOpen(false); }} />
-            <MItem icon={<ArrowUpRight className="h-4 w-4" />} label="How it works" onClick={() => { scrollToId('how'); setMobileOpen(false); }} />
+        {mobileOpen && (
+          <div className="mt-2 animate-fade-up lg:hidden">
+            <div className="max-h-[78vh] overflow-y-auto rounded-3xl border border-ink-900/[0.06] bg-paper-50 p-2 shadow-panel">
+              <p className="px-3 pb-1 pt-2 label text-ink-500">Navigate</p>
+              <MItem icon={<ArrowUpRight className="h-4 w-4" />} label="Priorities" onClick={() => { scrollToId('priorities'); setMobileOpen(false); }} />
+              <MItem icon={<ArrowUpRight className="h-4 w-4" />} label="Plan" onClick={() => { scrollToId('plan'); setMobileOpen(false); }} />
+              <MItem icon={<ArrowUpRight className="h-4 w-4" />} label="Agent" onClick={() => { scrollToId('agent'); setMobileOpen(false); }} />
+              <MItem icon={<ArrowUpRight className="h-4 w-4" />} label="How it works" onClick={() => { scrollToId('how'); setMobileOpen(false); }} />
 
-            <div className="my-1 h-px bg-ink-900/[0.06]" />
-            <p className="px-3 pb-1 pt-1 label text-ink-500">Do</p>
-            <MItem icon={<Sparkle className="h-4 w-4" />} label="Plan my day" onClick={() => { planMyDay(); setMobileOpen(false); }} />
-            <MItem icon={<Lifebuoy className="h-4 w-4" />} label="Rescue me" danger onClick={() => { rescueMe(); setMobileOpen(false); }} />
-            <MItem icon={<Play className="h-4 w-4" />} label="Daily briefing" onClick={() => { requestBriefing(); setMobileOpen(false); }} />
-            <MItem icon={<Chart className="h-4 w-4" />} label="Open command palette (⌘K)" onClick={() => { setMobileOpen(false); setPaletteOpen(true); }} />
+              <div className="my-1 h-px bg-ink-900/[0.06]" />
+              <p className="px-3 pb-1 pt-1 label text-ink-500">Do</p>
+              <MItem icon={<Sparkle className="h-4 w-4" />} label="Plan my day" onClick={() => { planMyDay(); setMobileOpen(false); }} />
+              <MItem icon={<Lifebuoy className="h-4 w-4" />} label="Rescue me" danger onClick={() => { rescueMe(); setMobileOpen(false); }} />
+              <MItem icon={<Play className="h-4 w-4" />} label="Daily briefing" onClick={() => { requestBriefing(); setMobileOpen(false); }} />
+              <MItem icon={<Chart className="h-4 w-4" />} label="Open command palette (⌘K)" onClick={() => { setMobileOpen(false); setPaletteOpen(true); }} />
 
-            <div className="my-1 h-px bg-ink-900/[0.06]" />
-            <p className="px-3 pb-1 pt-1 label text-ink-500">Controls</p>
-            <MItem icon={theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />} label={theme === 'dark' ? 'Light mode' : 'Dark mode'} onClick={toggleTheme} />
-            <MItem icon={<Bell className="h-4 w-4" />} label="Browser reminders" active={remindersOn} onClick={toggleReminders} />
-            {tts.supported && <MItem icon={<Speaker className="h-4 w-4" />} label="Voice replies" active={voiceOut} onClick={toggleVoice} />}
-            {convo.supported && tts.supported && <MItem icon={<Mic className="h-4 w-4" />} label="Hands-free conversation" active={converseOn} onClick={toggleConverse} />}
+              <div className="my-1 h-px bg-ink-900/[0.06]" />
+              <p className="px-3 pb-1 pt-1 label text-ink-500">Controls</p>
+              <MItem icon={<Bell className="h-4 w-4" />} label="Browser reminders" active={remindersOn} onClick={toggleReminders} />
+              {tts.supported && <MItem icon={<Speaker className="h-4 w-4" />} label="Voice replies" active={voiceOut} onClick={toggleVoice} />}
+              {convo.supported && tts.supported && <MItem icon={<Mic className="h-4 w-4" />} label="Hands-free conversation" active={converseOn} onClick={toggleConverse} />}
 
-            <div className="my-1 h-px bg-ink-900/[0.06]" />
-            <p className="px-3 pb-1 pt-1 label text-ink-500">Account</p>
-            <MItem icon={<Chart className="h-4 w-4" />} label="Insights" onClick={() => { setMobileOpen(false); setShowInsights(true); }} />
-            <MItem icon={<Gear className="h-4 w-4" />} label="Profile & preferences" onClick={() => { setMobileOpen(false); setShowSettings(true); }} />
-            <MItem icon={<Info className="h-4 w-4" />} label="About Clutch" onClick={() => { setMobileOpen(false); setShowAbout(true); }} />
-            {auth.enabled && !auth.user && (
-              <div className="px-3 py-2">
-                <GoogleSignInButton render={auth.renderButton} />
-              </div>
-            )}
-            {auth.user && auth.enabled && <MItem icon={<X className="h-4 w-4" />} label="Sign out" onClick={() => { auth.signOut(); setMobileOpen(false); }} />}
-            <MItem icon={<Trash className="h-4 w-4" />} label="Reset everything" danger onClick={() => { setMobileOpen(false); resetAll(); }} />
+              <div className="my-1 h-px bg-ink-900/[0.06]" />
+              <p className="px-3 pb-1 pt-1 label text-ink-500">More</p>
+              <MItem icon={<Chart className="h-4 w-4" />} label="Insights" onClick={() => { setMobileOpen(false); setShowInsights(true); }} />
+              <MItem icon={<Info className="h-4 w-4" />} label="About Clutch" onClick={() => { setMobileOpen(false); setShowAbout(true); }} />
+              <MItem icon={<Trash className="h-4 w-4" />} label="Reset everything" danger onClick={() => { setMobileOpen(false); resetAll(); }} />
+            </div>
           </div>
-        </div>
+        )}
       </header>
 
       {noKey && (
