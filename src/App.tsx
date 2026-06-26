@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import { useStore } from './lib/store';
 import { hasApiKey } from './lib/gemini';
 import { formatDeadline, realityCheck, slippage } from './lib/scheduler';
@@ -28,7 +28,7 @@ import { HowItWorks } from './components/HowItWorks';
 import { CommandPalette, type Command } from './components/CommandPalette';
 import { Toaster } from './components/Toaster';
 import { downloadICS, scheduleToICS } from './lib/calendar';
-import { ArrowUpRight, Bell, Calendar, Chart, Check, Doc, Flame, Gear, Github, Globe, Info, Lifebuoy, Linkedin, Mic, Moon, Play, Speaker, Sparkle, Sun, Trash, X } from './components/icons';
+import { ArrowUpRight, Bell, Calendar, Chart, Check, Doc, Flame, Gear, Github, Globe, Info, Lifebuoy, Linkedin, Menu, Mic, Moon, Play, Speaker, Sparkle, Sun, Trash, X } from './components/icons';
 import { Logo } from './components/Logo';
 
 const TINTS = {
@@ -37,6 +37,33 @@ const TINTS = {
   butter: { bg: 'bg-butter-100', fg: 'text-butter-700', dim: 'text-butter-700/70' },
   lilac: { bg: 'bg-lilac-100', fg: 'text-lilac-700', dim: 'text-lilac-700/70' },
 } as const;
+
+function MItem({
+  icon,
+  label,
+  onClick,
+  active,
+  danger,
+}: {
+  icon: ReactElement;
+  label: string;
+  onClick: () => void;
+  active?: boolean;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm transition-colors ${
+        danger ? 'text-signal-red hover:bg-signal-red/10' : 'text-ink-800 hover:bg-stone-100'
+      }`}
+    >
+      <span className={active ? 'text-mint-600' : danger ? 'text-signal-red' : 'text-ink-500'}>{icon}</span>
+      <span className="flex-1">{label}</span>
+      {active && <span className="chip bg-mint-100 text-mint-700">On</span>}
+    </button>
+  );
+}
 
 function StatCard({
   label,
@@ -85,6 +112,7 @@ export default function App() {
   const [showAbout, setShowAbout] = useState(false);
   const [showInsights, setShowInsights] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [focusTask, setFocusTask] = useState<Task | null>(null);
   const [planning, setPlanning] = useState(false);
   const [rescuing, setRescuing] = useState(false);
@@ -354,7 +382,7 @@ export default function App() {
               </span>
             )}
           </div>
-          <nav className="hidden items-center gap-7 text-sm text-ink-600 md:flex">
+          <nav className="hidden items-center gap-7 text-sm text-ink-600 lg:flex">
             <button onClick={() => scrollToId('priorities')} className="transition-colors hover:text-ink-900">Priorities</button>
             <button onClick={() => scrollToId('plan')} className="transition-colors hover:text-ink-900">Plan</button>
             <button onClick={() => scrollToId('agent')} className="transition-colors hover:text-ink-900">Agent</button>
@@ -367,7 +395,7 @@ export default function App() {
               ⌘K
             </button>
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="hidden items-center gap-2 lg:flex">
             <button
               onClick={toggleTheme}
               title={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}
@@ -435,6 +463,60 @@ export default function App() {
                 <Gear className="h-3.5 w-3.5 text-ink-500" />
               </span>
             </ProfileMenu>
+          </div>
+
+          {/* Mobile hamburger */}
+          <button
+            onClick={() => setMobileOpen((o) => !o)}
+            aria-label="Menu"
+            aria-expanded={mobileOpen}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-ink-900/15 bg-paper-50 text-ink-900 transition-all hover:border-ink-900/40 active:scale-90 lg:hidden"
+          >
+            <span className={`transition-transform duration-300 ${mobileOpen ? 'rotate-90' : ''}`}>
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </span>
+          </button>
+        </div>
+
+        {/* Mobile menu panel */}
+        <div
+          className={`overflow-hidden transition-all duration-300 ease-out lg:hidden ${
+            mobileOpen ? 'mt-2 max-h-[80vh] opacity-100' : 'pointer-events-none max-h-0 opacity-0'
+          }`}
+        >
+          <div className="max-h-[78vh] overflow-y-auto rounded-3xl border border-ink-900/[0.06] bg-paper-50/95 p-2 shadow-panel backdrop-blur-md">
+            <p className="px-3 pb-1 pt-2 label text-ink-500">Navigate</p>
+            <MItem icon={<ArrowUpRight className="h-4 w-4" />} label="Priorities" onClick={() => { scrollToId('priorities'); setMobileOpen(false); }} />
+            <MItem icon={<ArrowUpRight className="h-4 w-4" />} label="Plan" onClick={() => { scrollToId('plan'); setMobileOpen(false); }} />
+            <MItem icon={<ArrowUpRight className="h-4 w-4" />} label="Agent" onClick={() => { scrollToId('agent'); setMobileOpen(false); }} />
+            <MItem icon={<ArrowUpRight className="h-4 w-4" />} label="How it works" onClick={() => { scrollToId('how'); setMobileOpen(false); }} />
+
+            <div className="my-1 h-px bg-ink-900/[0.06]" />
+            <p className="px-3 pb-1 pt-1 label text-ink-500">Do</p>
+            <MItem icon={<Sparkle className="h-4 w-4" />} label="Plan my day" onClick={() => { planMyDay(); setMobileOpen(false); }} />
+            <MItem icon={<Lifebuoy className="h-4 w-4" />} label="Rescue me" danger onClick={() => { rescueMe(); setMobileOpen(false); }} />
+            <MItem icon={<Play className="h-4 w-4" />} label="Daily briefing" onClick={() => { requestBriefing(); setMobileOpen(false); }} />
+            <MItem icon={<Chart className="h-4 w-4" />} label="Open command palette (⌘K)" onClick={() => { setMobileOpen(false); setPaletteOpen(true); }} />
+
+            <div className="my-1 h-px bg-ink-900/[0.06]" />
+            <p className="px-3 pb-1 pt-1 label text-ink-500">Controls</p>
+            <MItem icon={theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />} label={theme === 'dark' ? 'Light mode' : 'Dark mode'} onClick={toggleTheme} />
+            <MItem icon={<Bell className="h-4 w-4" />} label="Browser reminders" active={remindersOn} onClick={toggleReminders} />
+            {tts.supported && <MItem icon={<Speaker className="h-4 w-4" />} label="Voice replies" active={voiceOut} onClick={toggleVoice} />}
+            {convo.supported && tts.supported && <MItem icon={<Mic className="h-4 w-4" />} label="Hands-free conversation" active={converseOn} onClick={toggleConverse} />}
+
+            <div className="my-1 h-px bg-ink-900/[0.06]" />
+            <p className="px-3 pb-1 pt-1 label text-ink-500">Account</p>
+            <MItem icon={<Chart className="h-4 w-4" />} label="Insights" onClick={() => { setMobileOpen(false); setShowInsights(true); }} />
+            <MItem icon={<Gear className="h-4 w-4" />} label="Profile & preferences" onClick={() => { setMobileOpen(false); setShowSettings(true); }} />
+            <MItem icon={<Info className="h-4 w-4" />} label="About Clutch" onClick={() => { setMobileOpen(false); setShowAbout(true); }} />
+            {auth.enabled && !auth.user && (
+              <div className="px-3 py-2">
+                <GoogleSignInButton render={auth.renderButton} />
+              </div>
+            )}
+            {auth.user && auth.enabled && <MItem icon={<X className="h-4 w-4" />} label="Sign out" onClick={() => { auth.signOut(); setMobileOpen(false); }} />}
+            <MItem icon={<Trash className="h-4 w-4" />} label="Reset everything" danger onClick={() => { setMobileOpen(false); resetAll(); }} />
           </div>
         </div>
       </header>
