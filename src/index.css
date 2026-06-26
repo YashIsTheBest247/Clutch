@@ -5,6 +5,58 @@
 
 :root {
   color-scheme: light;
+  --ink-950: 12 11 10;
+  --ink-900: 22 21 19;
+  --ink-850: 29 27 24;
+  --ink-800: 38 35 32;
+  --ink-700: 58 54 49;
+  --ink-600: 92 86 78;
+  --ink-500: 130 123 113;
+  --paper-50: 255 255 255;
+  --paper-100: 251 250 248;
+  --stone-50: 250 249 247;
+  --stone-100: 244 242 238;
+  --stone-200: 235 232 226;
+  --stone-300: 221 217 209;
+  --stone-400: 205 199 189;
+  --stone-500: 179 172 160;
+  --stone-600: 138 131 119;
+  --stone-700: 97 91 81;
+  --glow-400: 43 40 36;
+  --glow-500: 22 21 19;
+  --glow-600: 12 11 10;
+  --page: 207 201 191;
+  --grid: 22 21 19;
+  --sel: 22 21 19;
+  --sel-fg: 255 255 255;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --ink-950: 250 249 246;
+  --ink-900: 237 234 228;
+  --ink-850: 220 216 209;
+  --ink-800: 198 193 184;
+  --ink-700: 165 159 149;
+  --ink-600: 132 126 116;
+  --ink-500: 108 102 93;
+  --paper-50: 26 24 22;
+  --paper-100: 32 30 27;
+  --stone-50: 32 30 27;
+  --stone-100: 38 36 32;
+  --stone-200: 50 47 42;
+  --stone-300: 66 62 56;
+  --stone-400: 88 83 75;
+  --stone-500: 120 113 103;
+  --stone-600: 150 143 132;
+  --stone-700: 185 179 168;
+  --glow-400: 220 216 209;
+  --glow-500: 237 234 228;
+  --glow-600: 250 249 246;
+  --page: 18 17 16;
+  --grid: 255 255 255;
+  --sel: 237 234 228;
+  --sel-fg: 22 21 19;
 }
 
 html {
@@ -20,16 +72,27 @@ body,
 body {
   margin: 0;
   overflow-x: hidden;
-  color: #161513;
+  color: rgb(var(--ink-900));
   font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
   letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
-  /* Warm taupe world with a faint architectural grid, like the reference. */
-  background-color: #cfc9bf;
+  /* Warm world + faint architectural grid; colors flip with the theme. */
+  background-color: rgb(var(--page));
   background-image:
-    linear-gradient(to right, rgba(22, 21, 19, 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(22, 21, 19, 0.035) 1px, transparent 1px);
-  background-size: 56px 56px;
+    radial-gradient(900px 520px at 88% -8%, rgba(250, 150, 110, 0.22), transparent 60%),
+    radial-gradient(700px 460px at -8% 6%, rgba(250, 90, 30, 0.06), transparent 55%),
+    linear-gradient(to right, rgb(var(--grid) / 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(var(--grid) / 0.035) 1px, transparent 1px);
+  background-size: auto, auto, 56px 56px, 56px 56px;
+}
+
+[data-theme='dark'] body {
+  background-image:
+    radial-gradient(900px 520px at 88% -8%, rgba(124, 140, 255, 0.1), transparent 60%),
+    radial-gradient(700px 460px at -8% 6%, rgba(58, 160, 255, 0.06), transparent 55%),
+    linear-gradient(to right, rgb(var(--grid) / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(var(--grid) / 0.05) 1px, transparent 1px);
+  background-size: auto, auto, 56px 56px, 56px 56px;
 }
 
 * {
@@ -37,8 +100,8 @@ body {
 }
 
 ::selection {
-  background: #161513;
-  color: #fff;
+  background: rgb(var(--sel));
+  color: rgb(var(--sel-fg));
 }
 
 ::-webkit-scrollbar {
@@ -46,13 +109,13 @@ body {
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(22, 21, 19, 0.16);
+  background: rgb(var(--ink-900) / 0.16);
   border-radius: 99px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(22, 21, 19, 0.3);
+  background: rgb(var(--ink-900) / 0.3);
   background-clip: content-box;
 }
 

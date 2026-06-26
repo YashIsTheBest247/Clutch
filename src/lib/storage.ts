@@ -19,6 +19,7 @@ export function emptyState(): AppState {
     streak: { count: 0 },
     goals: [],
     habits: [],
+    commitments: [],
     calibration: { factor: 1, samples: 0 },
   };
 }

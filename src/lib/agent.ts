@@ -113,6 +113,20 @@ const tools: FunctionDeclaration[] = [
     parameters: { type: Type.OBJECT, properties: {} },
   },
   {
+    name: 'add_commitment',
+    description:
+      'Record a FIXED real-life event that blocks time (a class, meeting, gym, appointment) so the schedule is built AROUND it. Use when the user mentions a fixed time commitment, not a task to complete.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        title: { type: Type.STRING },
+        start: { type: Type.STRING, description: 'ISO 8601 start with offset.' },
+        end: { type: Type.STRING, description: 'ISO 8601 end with offset.' },
+      },
+      required: ['title', 'start', 'end'],
+    },
+  },
+  {
     name: 'research_web',
     description:
       'Search the live web (Google) for real-world, up-to-date facts needed to plan or complete a task — opening hours, official portals/links, prices, addresses, dates, or how-to steps. Returns a grounded answer with sources. Use this instead of guessing real-world details.',
@@ -216,9 +230,30 @@ async function executeTool(name: string, args: any, state: AppState, now: Date):
         action: { tool: 'update_task_status', summary: `"${t.title}" → ${t.status}` },
       };
     }
+    case 'add_commitment': {
+      const cmt = {
+        id: uid('cmt'),
+        title: args.title,
+        start: args.start,
+        end: args.end,
+      };
+      state.commitments = [...(state.commitments ?? []), cmt];
+      return {
+        result: { ok: true },
+        action: { tool: 'add_commitment', summary: `Blocked "${cmt.title}"` },
+      };
+    }
     case 'build_schedule': {
       state.tasks.forEach((t) => (t.urgencyScore = computeUrgency(t, now)));
-      const blocks = autoSchedule(state.tasks, state.profile, [], now);
+      const busy = (state.commitments ?? []).map((c) => ({
+        id: c.id,
+        taskId: '',
+        taskTitle: c.title,
+        start: c.start,
+        end: c.end,
+        reason: 'fixed commitment',
+      }));
+      const blocks = autoSchedule(state.tasks, state.profile, busy, now);
       state.schedule = blocks;
       const byTask = new Map<string, number>();
       blocks.forEach((b) => byTask.set(b.taskId, (byTask.get(b.taskId) || 0) + 1));
@@ -286,7 +321,8 @@ How to act:
 - When a task has a clear work product (an email to send, an outline to write, a plan to follow, a checklist), GENERATE it fully with generate_deliverable so the user can act in one click.
 - When real-world facts would help (opening hours, official links/portals, prices, addresses, exact dates), call research_web rather than guessing — then use what you learn in deliverables and reply.
 - If an image is attached, read it carefully and extract EVERY task, commitment, deadline, or action item visible — handwritten notes, whiteboards, screenshots, bills, posters, or syllabi.
-- After creating/changing tasks, call build_schedule to lay out a concrete plan.
+- Distinguish fixed events from tasks: a class/meeting/gym/appointment at a set time is a COMMITMENT (use add_commitment) — the schedule is built around it; everything else is a task.
+- After creating/changing tasks, call build_schedule to lay out a concrete plan that works around fixed commitments.
 - Keep your final text reply short, warm, and confident: tell the user what you DID and the single most important next action. Use Markdown. Never dump raw JSON.`;
 }
 
@@ -329,8 +365,14 @@ export async function runAgent(
           )
           .join('\n');
 
+  const commitmentSummary =
+    working.commitments && working.commitments.length
+      ? '\nFixed commitments (schedule around these): ' +
+        working.commitments.map((c) => `${c.title} ${c.start}–${c.end}`).join('; ')
+      : '';
+
   const userParts: any[] = [
-    { text: `${contextSummary}\n\n---\nUser says: ${userText || '(see the attached image)'}` },
+    { text: `${contextSummary}${commitmentSummary}\n\n---\nUser says: ${userText || '(see the attached image)'}` },
   ];
   if (image) userParts.push({ inlineData: { mimeType: image.mimeType, data: image.data } });
   const contents: any[] = [{ role: 'user', parts: userParts }];

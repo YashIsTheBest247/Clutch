@@ -12,6 +12,7 @@ const tool: Record<string, { label: string; Icon: IconCmp }> = {
   generate_deliverable: { label: 'Wrote deliverable', Icon: Doc },
   update_task_status: { label: 'Updated status', Icon: Check },
   build_schedule: { label: 'Built schedule', Icon: Calendar },
+  add_commitment: { label: 'Blocked time', Icon: Calendar },
   research_web: { label: 'Searched the web', Icon: Search },
 };
 

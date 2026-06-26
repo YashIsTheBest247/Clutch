@@ -33,6 +33,8 @@ export interface Store {
   assignTaskGoal: (taskId: string, goalId?: string) => void;
   setTaskRecur: (taskId: string, recur?: Task['recur']) => void;
   recordActual: (taskId: string, mins: number) => void;
+  addCommitment: (title: string, start: string, end: string) => void;
+  deleteCommitment: (id: string) => void;
   addGoal: (title: string) => void;
   deleteGoal: (id: string) => void;
   addHabit: (title: string) => void;
@@ -207,6 +209,18 @@ export function useStore(): Store {
     setState((s) => ({ ...s, ...snapshot }));
   }, []);
 
+  const addCommitment = useCallback((title: string, start: string, end: string) => {
+    if (!title.trim() || !start || !end) return;
+    setState((s) => ({
+      ...s,
+      commitments: [...(s.commitments ?? []), { id: uid('cmt'), title: title.trim(), start, end }],
+    }));
+  }, []);
+
+  const deleteCommitment = useCallback((id: string) => {
+    setState((s) => ({ ...s, commitments: (s.commitments ?? []).filter((c) => c.id !== id) }));
+  }, []);
+
   const assignTaskGoal = useCallback((taskId: string, goalId?: string) => {
     setState((s) => ({
       ...s,
@@ -290,6 +304,8 @@ export function useStore(): Store {
     assignTaskGoal,
     setTaskRecur,
     recordActual,
+    addCommitment,
+    deleteCommitment,
     addGoal,
     deleteGoal,
     addHabit,

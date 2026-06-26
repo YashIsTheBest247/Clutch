@@ -9,31 +9,42 @@ export default {
         sans: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       colors: {
-        // Near-black scale — text + black pill buttons + the one dark card.
+        // All palette tokens resolve to CSS variables so a single `data-theme`
+        // flip re-themes the whole app (see index.css). `<alpha-value>` keeps
+        // Tailwind's /opacity utilities working.
         ink: {
-          950: '#0c0b0a',
-          900: '#161513',
-          850: '#1d1b18',
-          800: '#262320',
-          700: '#3a3631',
-          600: '#5c564e',
-          500: '#827b71',
+          950: 'rgb(var(--ink-950) / <alpha-value>)',
+          900: 'rgb(var(--ink-900) / <alpha-value>)',
+          850: 'rgb(var(--ink-850) / <alpha-value>)',
+          800: 'rgb(var(--ink-800) / <alpha-value>)',
+          700: 'rgb(var(--ink-700) / <alpha-value>)',
+          600: 'rgb(var(--ink-600) / <alpha-value>)',
+          500: 'rgb(var(--ink-500) / <alpha-value>)',
         },
-        // Warm taupe / stone — the calm neutral world of the UI.
         stone: {
-          50: '#faf9f7',
-          100: '#f4f2ee',
-          200: '#ebe8e2',
-          300: '#ddd9d1',
-          400: '#cdc7bd',
-          500: '#b3aca0',
-          600: '#8a8377',
-          700: '#615b51',
+          50: 'rgb(var(--stone-50) / <alpha-value>)',
+          100: 'rgb(var(--stone-100) / <alpha-value>)',
+          200: 'rgb(var(--stone-200) / <alpha-value>)',
+          300: 'rgb(var(--stone-300) / <alpha-value>)',
+          400: 'rgb(var(--stone-400) / <alpha-value>)',
+          500: 'rgb(var(--stone-500) / <alpha-value>)',
+          600: 'rgb(var(--stone-600) / <alpha-value>)',
+          700: 'rgb(var(--stone-700) / <alpha-value>)',
         },
-        paper: { 50: '#ffffff', 100: '#fbfaf8' },
-        // `glow`/`accent` remap to near-black so legacy accent classes go monochrome.
-        glow: { 400: '#2b2824', 500: '#161513', 600: '#0c0b0a' },
-        accent: { 400: '#2b2824', 500: '#161513', 600: '#0c0b0a' },
+        paper: {
+          50: 'rgb(var(--paper-50) / <alpha-value>)',
+          100: 'rgb(var(--paper-100) / <alpha-value>)',
+        },
+        glow: {
+          400: 'rgb(var(--glow-400) / <alpha-value>)',
+          500: 'rgb(var(--glow-500) / <alpha-value>)',
+          600: 'rgb(var(--glow-600) / <alpha-value>)',
+        },
+        accent: {
+          400: 'rgb(var(--glow-400) / <alpha-value>)',
+          500: 'rgb(var(--glow-500) / <alpha-value>)',
+          600: 'rgb(var(--glow-600) / <alpha-value>)',
+        },
         // Whisper-quiet earthy signal tones (urgency cues that still feel calm).
         signal: {
           red: '#b05c43',

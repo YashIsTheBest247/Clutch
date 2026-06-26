@@ -3,6 +3,13 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 
+// Apply the saved theme before first paint (no flash of the wrong theme).
+try {
+  document.documentElement.setAttribute('data-theme', localStorage.getItem('clutch.theme') || 'light');
+} catch {
+  /* noop */
+}
+
 // Always open at the top on load/refresh — disable the browser's scroll restore
 // and force the top across every entry path (initial load, reload, and the
 // back-forward / bfcache "pageshow" restore), bypassing CSS smooth-scroll.

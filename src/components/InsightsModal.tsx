@@ -19,12 +19,14 @@ export function InsightsModal({
   habits,
   streak,
   calibration,
+  onRetro,
   onClose,
 }: {
   tasks: Task[];
   habits: Habit[];
   streak: number;
   calibration?: { factor: number; samples: number };
+  onRetro?: () => void;
   onClose: () => void;
 }) {
   const [insight, setInsight] = useState('');
@@ -79,9 +81,16 @@ export function InsightsModal({
             <Chart className="h-4 w-4 text-ink-700" />
             <h3 className="font-display text-base font-semibold text-ink-900">Insights</h3>
           </div>
-          <button onClick={onClose} className="btn-ghost !px-2.5 !py-1.5">
-            <X />
-          </button>
+          <div className="flex items-center gap-2">
+            {onRetro && (
+              <button onClick={onRetro} className="btn-ghost !py-1.5 !text-xs">
+                Weekly review
+              </button>
+            )}
+            <button onClick={onClose} className="btn-ghost !px-2.5 !py-1.5">
+              <X />
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-3">

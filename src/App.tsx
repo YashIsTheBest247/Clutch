@@ -7,6 +7,7 @@ import { useTTS } from './lib/useTTS';
 import { useReminders } from './lib/useReminders';
 import { useConversation } from './lib/useConversation';
 import { useToasts } from './lib/useToasts';
+import { useTheme } from './lib/useTheme';
 import type { Task } from './types';
 import { Composer } from './components/Composer';
 import { TaskCard } from './components/TaskCard';
@@ -23,7 +24,7 @@ import { GoalsHabits } from './components/GoalsHabits';
 import { CommandPalette, type Command } from './components/CommandPalette';
 import { Toaster } from './components/Toaster';
 import { downloadICS, scheduleToICS } from './lib/calendar';
-import { ArrowUpRight, Bell, Calendar, Chart, Check, Doc, Flame, Gear, Github, Globe, Info, Lifebuoy, Linkedin, Mic, Play, Speaker, Sparkle, Trash, X } from './components/icons';
+import { ArrowUpRight, Bell, Calendar, Chart, Check, Doc, Flame, Gear, Github, Globe, Info, Lifebuoy, Linkedin, Mic, Moon, Play, Speaker, Sparkle, Sun, Trash, X } from './components/icons';
 import { Logo } from './components/Logo';
 
 function StatCard({
@@ -84,6 +85,7 @@ export default function App() {
   const [nudgeDismissed, setNudgeDismissed] = useState(false);
   const streak = state.streak?.count ?? 0;
   const toasts = useToasts();
+  const { theme, toggle: toggleTheme } = useTheme();
 
   // Undoable task actions.
   const removeTask = (t: Task) => {
@@ -252,6 +254,15 @@ export default function App() {
     );
   };
 
+  const weeklyRetro = async () => {
+    if (thinking) return;
+    setShowInsights(false);
+    setTimeout(() => scrollToId('agent'), 80);
+    await store.sendToAgent(
+      "Give me my weekly retrospective. Review what I completed and what's still open, call out 1–2 honest patterns in how I worked this week, then propose a concrete plan for next week — the key priorities and how to set up my days. Keep it tight and motivating.",
+    );
+  };
+
   // ⌘K / Ctrl+K command palette.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -291,6 +302,8 @@ export default function App() {
     { id: 'why', label: 'Why this plan? — explain the ordering', icon: <Info className="h-4 w-4" />, run: explainPlan, disabled: open.length === 0 },
     { id: 'cal', label: 'Export plan to calendar (.ics)', icon: <Calendar className="h-4 w-4" />, run: exportCalendar },
     { id: 'insights', label: 'Open insights', icon: <Chart className="h-4 w-4" />, run: () => setShowInsights(true) },
+    { id: 'retro', label: 'Weekly retrospective', icon: <Chart className="h-4 w-4" />, run: weeklyRetro },
+    { id: 'theme', label: 'Toggle dark / light theme', icon: theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />, run: toggleTheme },
     { id: 'remind', label: 'Toggle browser reminders', icon: <Bell className="h-4 w-4" />, run: toggleReminders },
     { id: 'voice', label: 'Toggle voice replies', icon: <Speaker className="h-4 w-4" />, run: toggleVoice },
     { id: 'go-pri', label: 'Go to Priorities', hint: 'section', icon: <ArrowUpRight className="h-4 w-4" />, run: () => scrollToId('priorities') },
@@ -337,6 +350,13 @@ export default function App() {
             </button>
           </nav>
           <div className="flex items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              title={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}
+              className="hidden h-9 w-9 items-center justify-center rounded-full border border-ink-900/15 bg-paper-50 text-ink-900 transition-colors hover:border-ink-900/40 sm:flex"
+            >
+              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
             <button
               onClick={toggleReminders}
               title={remindersOn ? 'Reminders on' : 'Enable browser reminders'}
@@ -637,7 +657,13 @@ export default function App() {
         {/* Agenda */}
         <section id="plan" className="scroll-mt-24 lg:col-span-4">
           <Reveal>
-            <Agenda blocks={state.schedule} tasks={state.tasks} />
+            <Agenda
+              blocks={state.schedule}
+              tasks={state.tasks}
+              commitments={state.commitments}
+              onAddCommitment={store.addCommitment}
+              onDeleteCommitment={store.deleteCommitment}
+            />
           </Reveal>
         </section>
 
@@ -775,6 +801,7 @@ export default function App() {
           habits={state.habits ?? []}
           streak={streak}
           calibration={state.calibration}
+          onRetro={weeklyRetro}
           onClose={() => setShowInsights(false)}
         />
       )}

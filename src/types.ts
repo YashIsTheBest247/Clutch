@@ -47,6 +47,13 @@ export interface Deliverable {
   createdAt: string;
 }
 
+export interface Commitment {
+  id: string;
+  title: string;
+  start: string; // ISO
+  end: string; // ISO
+}
+
 export interface ScheduleBlock {
   id: string;
   taskId: string;
@@ -112,6 +119,8 @@ export interface AppState {
   streak?: Streak;
   goals?: Goal[];
   habits?: Habit[];
+  /** Fixed real-life events the planner must schedule around. */
+  commitments?: Commitment[];
   /** Learned ratio of actual time to estimated time (1 = perfectly calibrated). */
   calibration?: { factor: number; samples: number };
 }
